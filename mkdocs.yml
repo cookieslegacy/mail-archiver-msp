@@ -130,6 +130,10 @@ nav:
       - Audit Data Export: AuditExport.md
       - Emergency Account Recovery: EmergencyAccountRecovery.md
       - Retention Policies: RetentionPolicies.md
+  - Mandanten & Revisionssicherheit (Fork):
+      - Mandanten (Organisationen): Organizations.md
+      - Revisionssichere Archivierung (GoBD): Compliance.md
+      - Vorlage Verfahrensdokumentation: Verfahrensdokumentation.md
   - Provider Guides:
       - Azure App Registration (M365): AZURE_APP_REGISTRATION_M365.md
       - M365 Tenant Mailbox Import: M365TenantImport.md

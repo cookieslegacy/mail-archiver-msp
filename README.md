@@ -1,5 +1,7 @@
 # 📧 Mail-Archiver - Email Archiving System
 
+> **Fork mit Mandanten und revisionssicherer Archivierung (GoBD)** – siehe [FORK.md](FORK.md).
+
 **A comprehensive solution for archiving, searching, and exporting emails**
 
 🌐 **Website:** [mail-archiver.org](https://mail-archiver.org)
