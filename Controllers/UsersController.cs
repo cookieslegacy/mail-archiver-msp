@@ -121,10 +121,11 @@ namespace MailArchiver.Controllers
                     password,
                     model.IsAdmin);
 
-                // Set self-manager flag if specified
-                if (model.IsSelfManager)
+                // Set self-manager / auditor flags if specified
+                if (model.IsSelfManager || model.IsAuditor)
                 {
-                    newUser.IsSelfManager = true;
+                    newUser.IsSelfManager = model.IsSelfManager;
+                    newUser.IsAuditor = model.IsAuditor;
                     await _userService.UpdateUserAsync(newUser);
                 }
 
@@ -176,6 +177,7 @@ namespace MailArchiver.Controllers
                 Email = user.Email,
                 IsAdmin = user.IsAdmin,
                 IsSelfManager = user.IsSelfManager,
+                IsAuditor = user.IsAuditor,
                 IsActive = user.IsActive
             };
 
@@ -271,6 +273,7 @@ namespace MailArchiver.Controllers
                     existingUser.Email = model.Email;
                     existingUser.IsAdmin = model.IsAdmin;
                     existingUser.IsSelfManager = model.IsSelfManager;
+                    existingUser.IsAuditor = model.IsAuditor;
                     existingUser.IsActive = model.IsActive;
 
                     // SECURITY: When activating an OIDC user, also clear the RequiresApproval flag

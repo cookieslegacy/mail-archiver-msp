@@ -1,0 +1,267 @@
+@model MailArchiver.Controllers.ComplianceViewModel
+@{
+    ViewData["Title"] = CL["Compliance"];
+    string Utc(DateTime? value) => value?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss") ?? string.Empty;
+    var org = Model.Organization;
+    var lastRun = Model.Runs.FirstOrDefault();
+    long Sealed(string source) => Model.OriginalsBySource.TryGetValue(source, out var n) ? n : 0;
+}
+
+<div class="container-fluid">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+        <div>
+            <h1 class="h3 mb-0"><i class="bi bi-shield-check me-2"></i>@CL["Compliance"]</h1>
+            <div class="text-muted">@org.Name</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <form asp-action="Verify" method="post">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check2-all me-1"></i>@CL["RunVerification"]</button>
+            </form>
+            <a asp-action="ChainExport" class="btn btn-outline-secondary"><i class="bi bi-filetype-csv me-1"></i>@CL["ExportChain"]</a>
+        </div>
+    </div>
+
+    <!-- Status -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted small">@CL["LastVerification"]</div>
+                    @if (lastRun == null)
+                    {
+                        <div class="h5 mb-0">@CL["NeverVerified"]</div>
+                    }
+                    else
+                    {
+                        var css = lastRun.Status switch { "Ok" => "text-success", "Running" => "text-secondary", _ => "text-danger" };
+                        <div class="h5 mb-0 @css">@CL["Status_" + lastRun.Status]</div>
+                        <div class="small"><span class="utc-timestamp" data-utc-time="@Utc(lastRun.StartedAt)">@lastRun.StartedAt.ToString("g")</span></div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted small">@CL["EmailsInArchive"]</div>
+                    <div class="h5 mb-0">@Model.TotalEmails.ToString("N0")</div>
+                    <div class="small text-muted">
+                        @CL["WithOriginal"]: @((Sealed(OriginalSources.Imap) + Sealed(OriginalSources.Graph) + Sealed(OriginalSources.ImportEml) + Sealed(OriginalSources.ImportMbox) + Sealed(OriginalSources.Serialized)).ToString("N0"))
+                        &middot; @CL["LegacySealed"]: @Sealed(OriginalSources.LegacySeal).ToString("N0")
+                        @if (Model.EmailsWithoutOriginal > 0)
+                        {
+                            <span class="text-warning">&middot; @CL["NotSealedYet"]: @Model.EmailsWithoutOriginal.ToString("N0")</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted small">@CL["Retention"]</div>
+                    <div class="h5 mb-0">@CL["YearsValue", org.RetentionYears]</div>
+                    <div class="small text-muted">
+                        @CL["Expired"]: @Model.ExpiredNotPurged.ToString("N0") &middot; @CL["Purged"]: @Model.PurgedOriginals.ToString("N0")
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100 @(org.LegalHold ? "border-danger" : "")">
+                <div class="card-body">
+                    <div class="text-muted small">@CL["LegalHold"]</div>
+                    <div class="h5 mb-0 @(org.LegalHold ? "text-danger" : "")">@(org.LegalHold ? CL["HoldWholeOrganization"] : CL["HoldEmailsCount", Model.EmailsOnHold])</div>
+                    @if (org.LegalHold)
+                    {
+                        <div class="small">@org.LegalHoldReason</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Settings -->
+        <div class="col-lg-6">
+            <div class="card mb-3">
+                <div class="card-header bg-light"><i class="bi bi-sliders me-1"></i>@CL["RetentionSettings"]</div>
+                <div class="card-body">
+                    <form asp-action="Settings" method="post">
+                        <fieldset @(Model.CanEdit ? "" : "disabled")>
+                            <div class="mb-3">
+                                <label class="form-label" for="retentionYears">@CL["RetentionYears"]</label>
+                                <input type="number" min="0" max="100" class="form-control" id="retentionYears" name="retentionYears" value="@org.RetentionYears" />
+                                <div class="form-text">@CL["RetentionYearsHelp"]</div>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="autoPurgeExpired" name="autoPurgeExpired" value="true" @(org.AutoPurgeExpired ? "checked" : "") />
+                                <label class="form-check-label" for="autoPurgeExpired">@CL["AutoPurgeExpired"]</label>
+                                <div class="form-text">@CL["AutoPurgeExpiredHelp"]</div>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="legalHold" name="legalHold" value="true" @(org.LegalHold ? "checked" : "") />
+                                <label class="form-check-label" for="legalHold">@CL["LegalHoldOrganization"]</label>
+                            </div>
+                            <div class="mb-3">
+                                <input type="text" class="form-control" name="legalHoldReason" value="@org.LegalHoldReason" placeholder="@CL["LegalHoldReason"]" />
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="allowProviderAccess" name="allowProviderAccess" value="true" @(org.AllowProviderAccess ? "checked" : "") />
+                                <label class="form-check-label" for="allowProviderAccess">@CL["AllowProviderAccess"]</label>
+                                <div class="form-text">@CL["AllowProviderAccessHelp"]</div>
+                            </div>
+                            @if (Model.CanEdit)
+                            {
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>@CL["Save"]</button>
+                            }
+                        </fieldset>
+                    </form>
+                    @if (Model.CanEdit && Model.ExpiredNotPurged > 0)
+                    {
+                        <hr />
+                        <form asp-action="PurgeExpired" method="post" onsubmit="return confirm('@CL["PurgeExpiredConfirm", Model.ExpiredNotPurged]');">
+                            <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash3 me-1"></i>@CL["PurgeExpiredNow", Model.ExpiredNotPurged]</button>
+                        </form>
+                    }
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-light"><i class="bi bi-envelope-at me-1"></i>@CL["AccountRetention"]</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr><th>@CL["Account"]</th><th class="text-end">@CL["Emails"]</th><th>@CL["RetentionYears"]</th><th>@CL["LegalHold"]</th><th></th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var a in Model.Accounts)
+                                {
+                                    <tr>
+                                        <td><div>@a.Name</div><div class="small text-muted">@a.EmailAddress</div></td>
+                                        <td class="text-end">@a.Emails.ToString("N0")</td>
+                                        <td colspan="3">
+                                            <form asp-action="Account" method="post" class="d-flex gap-2 align-items-center">
+                                                <input type="hidden" name="id" value="@a.Id" />
+                                                <input type="number" min="0" max="100" name="retentionYears" value="@a.RetentionYears" placeholder="@org.RetentionYears" class="form-control form-control-sm" style="max-width:6rem" @(Model.CanEdit ? "" : "disabled") />
+                                                <div class="form-check mb-0">
+                                                    <input class="form-check-input" type="checkbox" name="legalHold" value="true" @(a.LegalHold ? "checked" : "") @(Model.CanEdit ? "" : "disabled") />
+                                                </div>
+                                                @if (Model.CanEdit)
+                                                {
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary ms-auto"><i class="bi bi-save"></i></button>
+                                                }
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="form-text px-3 pb-2">@CL["AccountRetentionHelp"]</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Integrity -->
+        <div class="col-lg-6">
+            <div class="card mb-3">
+                <div class="card-header bg-light"><i class="bi bi-link-45deg me-1"></i>@CL["HashChains"]</div>
+                <div class="card-body small">
+                    <div class="mb-2">
+                        <div class="text-muted">@CL["OriginalsChain"]</div>
+                        @if (Model.OriginalsHead == null)
+                        {
+                            <div>@CL["ChainEmpty"]</div>
+                        }
+                        else
+                        {
+                            <div>#@Model.OriginalsHead.Seq &middot; <span class="utc-timestamp" data-utc-time="@Utc(Model.OriginalsHead.At)">@Model.OriginalsHead.At.ToString("g")</span></div>
+                            <code class="text-break user-select-all">@Model.OriginalsHead.Hash</code>
+                        }
+                    </div>
+                    <div class="mb-2">
+                        <div class="text-muted">@CL["AuditChain"]</div>
+                        @if (Model.AuditHead == null)
+                        {
+                            <div>@CL["ChainEmpty"]</div>
+                        }
+                        else
+                        {
+                            <div>#@Model.AuditHead.Seq</div>
+                            <code class="text-break user-select-all">@Model.AuditHead.Hash</code>
+                        }
+                    </div>
+                    <div>
+                        <div class="text-muted">@CL["WormStorage"]</div>
+                        @if (Model.WormEnabled)
+                        {
+                            <div><i class="bi bi-safe2 me-1"></i>@Model.WormStatus</div>
+                        }
+                        else
+                        {
+                            <div class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>@CL["WormDisabled"]</div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-light"><i class="bi bi-clipboard-check me-1"></i>@CL["Verifications"]</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead><tr><th>@CL["Started"]</th><th>@CL["Status"]</th><th class="text-end">@CL["Originals"]</th><th class="text-end">@CL["AuditEntries"]</th><th class="text-end">@CL["Anchors"]</th><th>@CL["By"]</th></tr></thead>
+                            <tbody>
+                                @foreach (var r in Model.Runs)
+                                {
+                                    var css = r.Status switch { "Ok" => "bg-success", "Running" => "bg-secondary", _ => "bg-danger" };
+                                    <tr>
+                                        <td><a asp-action="Run" asp-route-id="@r.Id"><span class="utc-timestamp" data-utc-time="@Utc(r.StartedAt)">@r.StartedAt.ToString("g")</span></a></td>
+                                        <td><span class="badge @css">@CL["Status_" + r.Status]</span></td>
+                                        <td class="text-end">@r.OriginalsChecked.ToString("N0")@(r.OriginalsFailed > 0 ? $" / {r.OriginalsFailed:N0} ✗" : "")</td>
+                                        <td class="text-end">@r.AuditEntriesChecked.ToString("N0")@(r.AuditEntriesFailed > 0 ? $" / {r.AuditEntriesFailed:N0} ✗" : "")</td>
+                                        <td class="text-end">@r.AnchorsChecked.ToString("N0")@(r.AnchorsFailed > 0 ? $" / {r.AnchorsFailed:N0} ✗" : "")</td>
+                                        <td>@r.TriggeredBy</td>
+                                    </tr>
+                                }
+                                @if (!Model.Runs.Any())
+                                {
+                                    <tr><td colspan="6" class="text-muted">@CL["NeverVerified"]</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header bg-light"><i class="bi bi-pin-angle me-1"></i>@CL["Anchors"]</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead><tr><th>@CL["Created"]</th><th>@CL["Chain"]</th><th class="text-end">#</th><th>WORM</th><th>RFC 3161</th></tr></thead>
+                            <tbody>
+                                @foreach (var a in Model.Anchors)
+                                {
+                                    <tr>
+                                        <td><span class="utc-timestamp" data-utc-time="@Utc(a.CreatedAt)">@a.CreatedAt.ToString("g")</span></td>
+                                        <td>@CL["Chain_" + a.ChainKind]</td>
+                                        <td class="text-end">@a.ChainSeq</td>
+                                        <td>@(a.StorageKey != null ? "✓" : "–")</td>
+                                        <td>@(a.TimestampToken != null ? "✓" : "–")</td>
+                                    </tr>
+                                }
+                                @if (!Model.Anchors.Any())
+                                {
+                                    <tr><td colspan="5" class="text-muted">@CL["NoAnchors"]</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

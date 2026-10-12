@@ -493,6 +493,12 @@ namespace MailArchiver.Services
         private static IQueryable<ArchivedEmail> BuildEmailQuery(MailArchiverDbContext context, AuditExportJob job)
         {
             var query = context.ArchivedEmails.AsNoTracking();
+            // The job runs in the background without a user, so it is confined to the
+            // organization it was created in (-1 when its creator had none: nothing).
+            if (job.OrganizationId.HasValue)
+            {
+                query = query.Where(e => e.OrganizationId == job.OrganizationId.Value);
+            }
             if (job.MailAccountId.HasValue)
             {
                 query = query.Where(e => e.MailAccountId == job.MailAccountId.Value);

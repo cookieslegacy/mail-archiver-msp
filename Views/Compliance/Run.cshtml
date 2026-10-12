@@ -1,0 +1,49 @@
+@model MailArchiver.Models.IntegrityCheckRun
+@{
+    ViewData["Title"] = CL["Verification"];
+    string Utc(DateTime? value) => value?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss") ?? string.Empty;
+    var problems = new List<System.Text.Json.JsonElement>();
+    if (!string.IsNullOrEmpty(Model.Problems))
+    {
+        problems = System.Text.Json.JsonSerializer.Deserialize<List<System.Text.Json.JsonElement>>(Model.Problems) ?? new();
+    }
+    string Prop(System.Text.Json.JsonElement e, string name) =>
+        e.TryGetProperty(name, out var v) && v.ValueKind != System.Text.Json.JsonValueKind.Null ? v.ToString() : string.Empty;
+}
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h1 class="h3 mb-0"><i class="bi bi-clipboard-check me-2"></i>@CL["Verification"] #@Model.Id</h1>
+        <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>@CL["Back"]</a>
+    </div>
+    <div class="card mb-3">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">@CL["Status"]</dt><dd class="col-sm-9">@CL["Status_" + Model.Status]</dd>
+                <dt class="col-sm-3">@CL["Started"]</dt><dd class="col-sm-9"><span class="utc-timestamp" data-utc-time="@Utc(Model.StartedAt)">@Model.StartedAt.ToString("g")</span></dd>
+                <dt class="col-sm-3">@CL["Finished"]</dt><dd class="col-sm-9"><span class="utc-timestamp" data-utc-time="@Utc(Model.FinishedAt)">@Model.FinishedAt?.ToString("g")</span></dd>
+                <dt class="col-sm-3">@CL["By"]</dt><dd class="col-sm-9">@Model.TriggeredBy</dd>
+                <dt class="col-sm-3">@CL["Originals"]</dt><dd class="col-sm-9">@Model.OriginalsChecked.ToString("N0") / @CL["Failed"]: @Model.OriginalsFailed.ToString("N0")</dd>
+                <dt class="col-sm-3">@CL["AuditEntries"]</dt><dd class="col-sm-9">@Model.AuditEntriesChecked.ToString("N0") / @CL["Failed"]: @Model.AuditEntriesFailed.ToString("N0")</dd>
+                <dt class="col-sm-3">@CL["Anchors"]</dt><dd class="col-sm-9">@Model.AnchorsChecked.ToString("N0") / @CL["Failed"]: @Model.AnchorsFailed.ToString("N0")</dd>
+                <dt class="col-sm-3">@CL["ChainHead"]</dt><dd class="col-sm-9">#@Model.OriginalsHeadSeq <code class="text-break">@Model.OriginalsHeadHash</code></dd>
+            </dl>
+        </div>
+    </div>
+    @if (problems.Any())
+    {
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">@CL["ProblemsFound"]</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>@CL["Chain"]</th><th>#</th><th>@CL["Problem"]</th><th>@CL["Detail"]</th></tr></thead>
+                    <tbody>
+                        @foreach (var p in problems)
+                        {
+                            <tr><td>@Prop(p, "chain")</td><td>@Prop(p, "seq")</td><td>@Prop(p, "problem")</td><td><code>@Prop(p, "detail")</code></td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

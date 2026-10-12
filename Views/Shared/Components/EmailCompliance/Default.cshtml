@@ -1,0 +1,94 @@
+@model MailArchiver.ViewComponents.EmailComplianceModel
+@{
+    string Utc(DateTime? value) => value?.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss") ?? string.Empty;
+    var heldByAnything = Model.LegalHold || Model.InheritedHold;
+    var expired = Model.RetainUntil != null && Model.RetainUntil.Value.ToUniversalTime() <= DateTime.UtcNow;
+}
+<div class="card mb-3 border-secondary-subtle">
+    <div class="card-header bg-light d-flex flex-wrap align-items-center gap-2">
+        <i class="bi bi-shield-lock"></i>
+        <strong>@CL["ArchiveEvidence"]</strong>
+        @if (Model.HasOriginal)
+        {
+            <span class="badge bg-success">@CL["ChainEntry"] #@Model.ChainSeq</span>
+            @if (Model.InWorm)
+            {
+                <span class="badge bg-primary" title="@CL["WormHint"]"><i class="bi bi-safe2 me-1"></i>WORM</span>
+            }
+        }
+        else
+        {
+            <span class="badge bg-warning text-dark">@CL["NotSealedYet"]</span>
+        }
+        @if (heldByAnything)
+        {
+            <span class="badge bg-danger"><i class="bi bi-pause-circle me-1"></i>@CL["LegalHold"]</span>
+        }
+        <div class="ms-auto d-flex gap-2">
+            @if (Model.HasBytes)
+            {
+                <a class="btn btn-sm btn-outline-secondary" asp-controller="Compliance" asp-action="Original" asp-route-id="@Model.EmailId">
+                    <i class="bi bi-download me-1"></i>@CL["DownloadOriginal"]
+                </a>
+            }
+            @if (Model.CanSetHold)
+            {
+                <form asp-controller="Compliance" asp-action="EmailLegalHold" method="post" class="d-inline">
+                    <input type="hidden" name="id" value="@Model.EmailId" />
+                    <input type="hidden" name="hold" value="@(!Model.LegalHold ? "true" : "false")" />
+                    <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                    <button type="submit" class="btn btn-sm @(Model.LegalHold ? "btn-outline-danger" : "btn-outline-warning")">
+                        <i class="bi @(Model.LegalHold ? "bi-play-circle" : "bi-pause-circle") me-1"></i>
+                        @(Model.LegalHold ? CL["ReleaseLegalHold"] : CL["SetLegalHold"])
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+    <div class="card-body small">
+        <div class="row g-2">
+            <div class="col-md-6">
+                <div class="text-muted">@CL["RetainUntil"]</div>
+                <div>
+                    @if (Model.RetainUntil == null)
+                    {
+                        <span>@CL["RetentionPending"]</span>
+                    }
+                    else if (expired)
+                    {
+                        <span>@CL["RetentionExpired"]</span>
+                    }
+                    else
+                    {
+                        <span class="utc-timestamp" data-utc-time="@Utc(Model.RetainUntil)">@Model.RetainUntil.Value.ToUniversalTime().ToString("d")</span>
+                    }
+                    @if (Model.InheritedHold)
+                    {
+                        <span class="text-danger ms-2">@CL["HoldInherited"]</span>
+                    }
+                </div>
+            </div>
+            @if (Model.HasOriginal)
+            {
+                <div class="col-md-6">
+                    <div class="text-muted">@CL["ArchivedAt"]</div>
+                    <div><span class="utc-timestamp" data-utc-time="@Utc(Model.ArchivedAt)">@Model.ArchivedAt?.ToString("g")</span>
+                        &middot; @CL["Source_" + Model.Source]
+                        @if (Model.HasBytes)
+                        {
+                            <span>&middot; @(Model.SizeBytes.ToString("N0")) Bytes</span>
+                        }
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="text-muted">@(Model.HasBytes ? CL["Sha256Original"] : CL["Sha256Seal"])</div>
+                    <code class="text-break user-select-all">@Model.Sha256</code>
+                </div>
+                <div class="col-12">
+                    <div class="text-muted">@CL["ChainHash"]</div>
+                    <code class="text-break user-select-all">@Model.ChainHash</code>
+                </div>
+            }
+        </div>
+    </div>
+</div>

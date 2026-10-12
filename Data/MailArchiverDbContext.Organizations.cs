@@ -31,9 +31,11 @@ namespace MailArchiver.Data
         private int OrganizationFilterId => _organizationContext.OrganizationId ?? -1;
 
         // Users and API keys must be found before anyone is signed in (login, API key
-        // authentication), and provider admins manage the users of all organizations.
+        // authentication). Provider admins see the users of their own organization only; the
+        // admins of other organizations are managed on the organizations page, which writes
+        // every change into that organization's audit log.
         private bool IdentityFilterBypass =>
-            _organizationContext.IsSystem || _organizationContext.IsAnonymous || _organizationContext.IsProviderAdmin;
+            _organizationContext.IsSystem || _organizationContext.IsAnonymous;
 
         private void ConfigureOrganizationsAndCompliance(ModelBuilder modelBuilder)
         {
@@ -218,8 +220,10 @@ namespace MailArchiver.Data
                             ?? (_organizationContext.IsSystem ? Organization.DefaultOrganizationId : null);
                         break;
 
-                    case AuditExportJob job when job.OrganizationId == null:
-                        job.OrganizationId = scopeOrganization;
+                    // A job created by a user without organization gets -1 and exports nothing;
+                    // only jobs created by system work stay unrestricted (null).
+                    case AuditExportJob job when job.OrganizationId == null && !_organizationContext.IsSystem:
+                        job.OrganizationId = scopeOrganization ?? -1;
                         break;
 
                     case AccessLog log when log.OrganizationId == null && !_organizationContext.IsSystem:

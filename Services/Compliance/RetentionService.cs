@@ -138,6 +138,9 @@ namespace MailArchiver.Services.Compliance
                     break;
 
                 await using var transaction = await _context.Database.BeginTransactionAsync(ct);
+                // Recorded on the purged originals by ma_email_purge_original.
+                await _context.Database.ExecuteSqlRawAsync(
+                    "SELECT set_config('mail_archiver.purge_reason', 'Retention period expired', true)", ct);
                 // The upstream deletion lock (DeletionPolicy) does not apply to expired retention.
                 await _context.ArchivedEmails.Where(e => ids.Contains(e.Id))
                     .ExecuteUpdateAsync(u => u.SetProperty(e => e.IsLocked, false), ct);

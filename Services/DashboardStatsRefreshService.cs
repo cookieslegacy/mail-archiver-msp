@@ -209,6 +209,10 @@ namespace MailArchiver.Services
 
                 await context.SaveChangesAsync(cancellationToken);
 
+                // One row per organization, computed through a context confined to it, so an
+                // organization's dashboard never shows numbers of another one.
+                await RefreshOrganizationStatisticsAsync(scope.ServiceProvider, context, emailCoreService, cancellationToken);
+
                 var duration = DateTime.UtcNow - startTime;
                 _logger.LogInformation("Dashboard statistics computed and cached in {Duration:F1} seconds (interval: {Minutes} minutes)",
                     duration.TotalSeconds, ResolveIntervalMinutes());
@@ -223,6 +227,52 @@ namespace MailArchiver.Services
             {
                 _logger.LogError(ex, "Error refreshing dashboard statistics: {Message}", ex.Message);
                 return false;
+            }
+        }
+
+        private static async Task RefreshOrganizationStatisticsAsync(IServiceProvider services, MailArchiverDbContext system,
+            EmailCoreService emailCoreService, CancellationToken cancellationToken)
+        {
+            var organizationIds = await system.Organizations.Select(o => o.Id).ToListAsync(cancellationToken);
+            // The options the system context was built with, so the organization contexts share
+            // its connection settings and interceptors.
+            var options = (DbContextOptions<MailArchiverDbContext>)
+                Microsoft.EntityFrameworkCore.Infrastructure.AccessorExtensions.GetService<
+                    Microsoft.EntityFrameworkCore.Infrastructure.IDbContextOptions>(system);
+            var protector = services.GetService<MailArchiver.Services.Security.ICredentialProtector>()
+                ?? MailArchiver.Services.Security.NullCredentialProtector.Instance;
+
+            foreach (var organizationId in organizationIds)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await using var scoped = new MailArchiverDbContext(options, protector,
+                    new MailArchiver.Services.Organizations.FixedOrganizationContext(organizationId));
+
+                var model = await Task.Run(() => emailCoreService.BuildAdminStatistics(scoped, _ => false), cancellationToken);
+                var storageBytes = await scoped.AccountStorageCaches.SumAsync(c => (long?)c.TotalBytes, cancellationToken) ?? 0;
+                var key = MailArchiver.Services.Organizations.DashboardScope.OrganizationKey(organizationId);
+
+                var row = await system.DashboardStatsCaches.FirstOrDefaultAsync(c => c.Key == key, cancellationToken);
+                if (row == null)
+                {
+                    row = new DashboardStatsCache { Key = key };
+                    system.DashboardStatsCaches.Add(row);
+                }
+                row.TotalEmails = model.TotalEmails;
+                row.IncomingEmails = model.IncomingEmails;
+                row.OutgoingEmails = model.OutgoingEmails;
+                row.TotalAttachments = model.TotalAttachments;
+                row.IncomingAttachments = model.IncomingAttachments;
+                row.OutgoingAttachments = model.OutgoingAttachments;
+                row.TotalAccounts = model.TotalAccounts;
+                row.AccountDomains = model.AccountDomains;
+                row.TotalDatabaseSizeBytes = storageBytes;
+                row.DefaultSeriesJson = JsonSerializer.Serialize(model.Series ?? new DashboardSeries());
+                row.EmailsPerAccountJson = Serialize(model.EmailsPerAccount);
+                row.ComputedAtUtc = DateTime.UtcNow;
+                row.ComputedWithDirectionSplits = emailCoreService.ShowDirectionSplits;
+                row.ComputedWithSelectablePeriods = emailCoreService.SelectablePeriods;
+                await system.SaveChangesAsync(cancellationToken);
             }
         }
 

@@ -62,6 +62,8 @@
         </div>
     </div>
 
+    @await Component.InvokeAsync("EmailCompliance", new { emailId = Model.Email.Id })
+
     <!-- Rest of the view remains the same -->
     <div class="card mb-3">
         <div class="card-header bg-light">

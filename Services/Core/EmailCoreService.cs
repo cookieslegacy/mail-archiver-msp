@@ -1134,6 +1134,13 @@ namespace MailArchiver.Services.Core
         /// it lives in the sync job service and not in the database. Null orders by last sync
         /// alone, which is what a caller without that index gets.
         /// </param>
+        /// <summary>
+        /// Cache key of the "all accounts" scope. Each organization has its own, so the
+        /// statistics (in memory and in DashboardStatsCache) never cross organizations.
+        /// </summary>
+        private string AdminScopeKey =>
+            MailArchiver.Services.Organizations.DashboardScope.AdminKey(_context.OrganizationScope);
+
         public async Task<DashboardViewModel> GetDashboardStatisticsAsync(
             Func<int, bool>? lastRunHadIssues = null)
         {
@@ -1143,7 +1150,7 @@ namespace MailArchiver.Services.Core
             // are deliberately NOT part of that row: ten index-backed rows are
             // cheap live and in a periodically refreshed snapshot they would be
             // up to RefreshIntervalMinutes old.
-            var model = await GetOrCreateCachedStatisticsAsync("admin", queryable =>
+            var model = await GetOrCreateCachedStatisticsAsync(AdminScopeKey, queryable =>
                 // Fallback while the table has no usable admin row yet (first start,
                 // Dashboard:RefreshIntervalMinutes = 0, or a row computed with other
                 // settings): same queries the background service runs, once, then
@@ -1334,7 +1341,7 @@ namespace MailArchiver.Services.Core
         /// </summary>
         private async Task<DashboardViewModel?> TryGetPrecomputedStatisticsAsync(string cacheKeySuffix)
         {
-            if (!string.Equals(cacheKeySuffix, "admin", StringComparison.Ordinal))
+            if (!string.Equals(cacheKeySuffix, AdminScopeKey, StringComparison.Ordinal))
                 return null;
 
             var row = await TryGetPrecomputedRowAsync();
@@ -1390,7 +1397,7 @@ namespace MailArchiver.Services.Core
             {
                 var row = await _context.DashboardStatsCaches
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(c => c.Key == "admin");
+                    .FirstOrDefaultAsync(c => c.Key == AdminScopeKey);
 
                 if (row == null
                     || string.IsNullOrWhiteSpace(row.DefaultSeriesJson)
@@ -1769,7 +1776,7 @@ namespace MailArchiver.Services.Core
             var normalizedOffset = DashboardPeriods.NormalizeOffset(windows, offset);
 
             var scope = accountIds == null
-                ? "admin"
+                ? AdminScopeKey
                 : "user-" + string.Join(",", accountIds.OrderBy(id => id));
             var cacheKey =
                 $"dashboard-series-{scope}-{granularity}-{window.Key}-{(outgoingSenders ? "out" : "in")}-{normalizedOffset}";
@@ -1797,6 +1804,11 @@ namespace MailArchiver.Services.Core
 
         private async Task<long> GetDatabaseSizeAsync()
         {
+            // Inside an organization the size of the whole database would reveal how much the
+            // other organizations store; the organization's own storage is shown instead.
+            if (!_context.OrganizationScope.IsSystem)
+                return await _context.AccountStorageCaches.SumAsync(c => (long?)c.TotalBytes) ?? 0;
+
             try
             {
                 using var connection = new Npgsql.NpgsqlConnection(_context.Database.GetConnectionString());

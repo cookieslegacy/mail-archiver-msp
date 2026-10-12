@@ -161,6 +161,26 @@ namespace MailArchiver.Migrations
                     BEFORE DELETE ON mail_archiver.""ArchivedEmails""
                     FOR EACH ROW EXECUTE FUNCTION mail_archiver.ma_email_retention_delete();
 
+                -- A deleted email takes the bytes of its original with it (data
+                -- protection); the original's row stays as proof in the chain.
+                -- Callers can name the reason in mail_archiver.purge_reason.
+                CREATE OR REPLACE FUNCTION mail_archiver.ma_email_purge_original()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    UPDATE mail_archiver.""ArchivedEmailOriginals""
+                    SET ""RawMime"" = NULL,
+                        ""PurgedAt"" = now(),
+                        ""PurgeReason"" = COALESCE(NULLIF(current_setting('mail_archiver.purge_reason', true), ''), 'Email deleted')
+                    WHERE ""ArchivedEmailId"" = OLD.""Id"" AND ""PurgedAt"" IS NULL;
+                    RETURN NULL;
+                END;
+                $$ LANGUAGE plpgsql;
+
+                DROP TRIGGER IF EXISTS ma_email_purge_original ON mail_archiver.""ArchivedEmails"";
+                CREATE TRIGGER ma_email_purge_original
+                    AFTER DELETE ON mail_archiver.""ArchivedEmails""
+                    FOR EACH ROW EXECUTE FUNCTION mail_archiver.ma_email_purge_original();
+
                 -- TRUNCATE skips row triggers, so it is refused altogether.
                 CREATE OR REPLACE FUNCTION mail_archiver.ma_no_truncate()
                 RETURNS TRIGGER AS $$
@@ -190,6 +210,8 @@ namespace MailArchiver.Migrations
                 DROP TRIGGER IF EXISTS ma_email_retention_propagate ON mail_archiver.""ArchivedEmails"";
                 DROP TRIGGER IF EXISTS ma_email_retention_delete ON mail_archiver.""ArchivedEmails"";
                 DROP TRIGGER IF EXISTS ma_email_no_truncate ON mail_archiver.""ArchivedEmails"";
+                DROP TRIGGER IF EXISTS ma_email_purge_original ON mail_archiver.""ArchivedEmails"";
+                DROP FUNCTION IF EXISTS mail_archiver.ma_email_purge_original();
                 DROP INDEX IF EXISTS mail_archiver.""IX_ArchivedEmails_RetainUntil"";
                 DROP INDEX IF EXISTS mail_archiver.""IX_ArchivedEmails_RetainUntil_Missing"";
                 DROP FUNCTION IF EXISTS mail_archiver.ma_email_retention_insert();

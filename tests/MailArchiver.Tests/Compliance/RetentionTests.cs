@@ -19,12 +19,12 @@ public class RetentionTests : ComplianceTestBase
         var shortAccount = await CreateAccountAsync(ctx, org, retentionYears: 6);
 
         var email = NewEmail(account, sent: new DateTime(2026, 3, 1, 10, 0, 0));
-        var handelsbrief = NewEmail(shortAccount, sent: new DateTime(2026, 12, 31, 23, 0, 0));
+        var handelsbrief = NewEmail(shortAccount, sent: new DateTime(2025, 12, 31, 23, 0, 0));
         ctx.ArchivedEmails.AddRange(email, handelsbrief);
         await ctx.SaveChangesAsync();
 
         var expected10 = new DateTime(2037, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        var expected6 = new DateTime(2033, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var expected6 = new DateTime(2032, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         Assert.Equal(expected10, email.RetainUntil!.Value.ToUniversalTime());
         Assert.Equal(expected6, handelsbrief.RetainUntil!.Value.ToUniversalTime());
         Assert.Equal(expected10, RetentionCalculator.RetentionEnd(email.SentDate, email.ReceivedDate, 10));

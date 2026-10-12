@@ -69,6 +69,10 @@ public abstract class ComplianceTestBase
         return account;
     }
 
+    /// <summary>
+    /// Emails of these tests may outlive the test run (retention), so they are dated in the
+    /// past and never show up as the newest emails of other tests.
+    /// </summary>
     protected static ArchivedEmail NewEmail(MailAccount account, string subject = "subject", DateTime? sent = null) => new()
     {
         MailAccountId = account.Id,

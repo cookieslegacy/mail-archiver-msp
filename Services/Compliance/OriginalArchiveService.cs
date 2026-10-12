@@ -113,44 +113,51 @@ namespace MailArchiver.Services.Compliance
                 return 0;
             var ids = deletedEmailIds.ToList();
 
-            var originals = await context.ArchivedEmailOriginals
-                .Where(o => ids.Contains(o.ArchivedEmailId) && o.PurgedAt == null)
-                .Select(o => new { o.Id, o.StorageKey, o.StorageVersionId })
-                .ToListAsync(cancellationToken);
-            if (originals.Count == 0)
-                return 0;
-
-            if (_worm.IsEnabled)
-            {
-                var originalIds = originals.Select(o => o.Id).ToList();
-                foreach (var stored in originals.Where(o => o.StorageKey != null)
-                             .GroupBy(o => (o.StorageKey, o.StorageVersionId)).Select(g => g.Key))
-                {
-                    // Content addressed keys: the same message archived twice shares one object.
-                    var stillUsed = await context.ArchivedEmailOriginals.AnyAsync(o =>
-                        o.StorageKey == stored.StorageKey && o.PurgedAt == null && !originalIds.Contains(o.Id),
-                        cancellationToken);
-                    if (stillUsed)
-                        continue;
-                    try
-                    {
-                        await _worm.DeleteAsync(stored.StorageKey!, stored.StorageVersionId, cancellationToken);
-                    }
-                    catch (Exception ex)
-                    {
-                        // The object stays until someone removes it; its retention has expired.
-                        _logger.LogWarning(ex, "Deleting expired WORM object {Key} failed", stored.StorageKey);
-                    }
-                }
-            }
-
-            var purgeIds = originals.Select(o => o.Id).ToArray();
-            return await context.ArchivedEmailOriginals
-                .Where(o => purgeIds.Contains(o.Id))
+            // Normally the database already purged the bytes when the email was deleted
+            // (ma_email_purge_original); this covers originals it could not reach.
+            var purged = await context.ArchivedEmailOriginals
+                .Where(o => ids.Contains(o.ArchivedEmailId) && o.PurgedAt == null
+                            && !context.ArchivedEmails.Any(e => e.Id == o.ArchivedEmailId))
                 .ExecuteUpdateAsync(u => u
                     .SetProperty(o => o.RawMime, (byte[]?)null)
                     .SetProperty(o => o.PurgedAt, DateTime.UtcNow)
                     .SetProperty(o => o.PurgeReason, reason), cancellationToken);
+
+            if (_worm.IsEnabled)
+                await DeleteStoredObjectsAsync(context, ids, cancellationToken);
+            return purged;
+        }
+
+        /// <summary>
+        /// Deletes the WORM objects of purged originals, unless another original that is still
+        /// kept uses the same (content addressed) object.
+        /// </summary>
+        public async Task DeleteStoredObjectsAsync(MailArchiverDbContext context, IReadOnlyCollection<int> emailIds,
+            CancellationToken cancellationToken = default)
+        {
+            var ids = emailIds.ToList();
+            var stored = await context.ArchivedEmailOriginals.AsNoTracking()
+                .Where(o => ids.Contains(o.ArchivedEmailId) && o.PurgedAt != null && o.StorageKey != null)
+                .Select(o => new { o.StorageKey, o.StorageVersionId })
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            foreach (var item in stored)
+            {
+                var stillUsed = await context.ArchivedEmailOriginals.AnyAsync(o =>
+                    o.StorageKey == item.StorageKey && o.PurgedAt == null, cancellationToken);
+                if (stillUsed)
+                    continue;
+                try
+                {
+                    await _worm.DeleteAsync(item.StorageKey!, item.StorageVersionId, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    // The object stays until someone removes it; its retention has expired anyway.
+                    _logger.LogWarning(ex, "Deleting expired WORM object {Key} failed", item.StorageKey);
+                }
+            }
         }
 
         public async Task<byte[]?> ReadAsync(ArchivedEmailOriginal original, CancellationToken cancellationToken = default)

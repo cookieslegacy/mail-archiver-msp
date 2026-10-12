@@ -16,6 +16,9 @@ namespace MailArchiver.Models.ViewModels
         public bool IsAdmin { get; set; } = false;
         
         public bool IsSelfManager { get; set; } = false;
+
+        // Read access to every mail account of the organization (e.g. tax auditor)
+        public bool IsAuditor { get; set; } = false;
         
         public bool IsActive { get; set; } = true;
     }

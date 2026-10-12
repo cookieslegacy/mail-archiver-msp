@@ -34,6 +34,8 @@ namespace MailArchiver.Services.Compliance
         private bool _backfillDone;
         // Highest email id checked for a missing original; new emails are checked as they come.
         private int _sealCursor;
+        // Originals purged since then still need their WORM objects deleted.
+        private DateTime _objectSweepFrom = DateTime.UtcNow.AddDays(-30);
 
         public ComplianceBackgroundService(IServiceScopeFactory scopeFactory, IntegrityCheckQueue queue,
             IOptions<ComplianceOptions> options, IWormStore worm, ILogger<ComplianceBackgroundService> logger)
@@ -148,6 +150,26 @@ namespace MailArchiver.Services.Compliance
                     if (sealedNow > 0)
                         _logger.LogInformation("Sealed {Count} emails without original up to id {Id}", sealedNow, _sealCursor);
                 }
+            }
+
+            if (_worm.IsEnabled)
+            {
+                // Emails deleted by any path have their original's bytes purged by the database;
+                // the WORM objects behind them are removed here.
+                using var scope = _scopeFactory.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<MailArchiverDbContext>();
+                var sweepUntil = DateTime.UtcNow;
+                var purgedEmailIds = await context.ArchivedEmailOriginals.AsNoTracking()
+                    .Where(o => o.PurgedAt != null && o.PurgedAt >= _objectSweepFrom && o.StorageKey != null)
+                    .Select(o => o.ArchivedEmailId)
+                    .ToListAsync(ct);
+                if (purgedEmailIds.Count > 0)
+                {
+                    var originals = scope.ServiceProvider.GetRequiredService<IOriginalArchiveService>() as OriginalArchiveService;
+                    if (originals != null)
+                        await originals.DeleteStoredObjectsAsync(context, purgedEmailIds, ct);
+                }
+                _objectSweepFrom = sweepUntil.AddMinutes(-10);
             }
 
             List<(int Id, bool AutoPurge)> organizations;

@@ -153,3 +153,19 @@ namespace MailArchiver.Services.Organizations
         public bool IsProviderSupportAccess => false;
     }
 }
+
+namespace MailArchiver.Services.Organizations
+{
+    /// <summary>Keys of the dashboard statistics caches.</summary>
+    public static class DashboardScope
+    {
+        /// <summary>All accounts of the instance (system scope).</summary>
+        public const string SystemKey = "admin";
+
+        /// <summary>All accounts the current scope may see: the instance, or one organization.</summary>
+        public static string AdminKey(IOrganizationContext scope) =>
+            scope.IsSystem ? SystemKey : OrganizationKey(scope.OrganizationId ?? -1);
+
+        public static string OrganizationKey(int organizationId) => $"admin-org{organizationId}";
+    }
+}
