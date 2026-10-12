@@ -1,0 +1,103 @@
+@model MailArchiver.Models.Organization
+@{
+    ViewData["Title"] = Model.Name;
+    var admins = (List<MailArchiver.Controllers.OrganizationAdminRow>)ViewBag.Admins;
+    var unassigned = (List<MailArchiver.Controllers.OrganizationAdminRow>)ViewBag.Unassigned;
+}
+<div class="container" style="max-width: 960px">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h1 class="h3 mb-0"><i class="bi bi-building me-2"></i>@Model.Name <small class="text-muted"><code>@Model.Slug</code></small></h1>
+        <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>@CL["Back"]</a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-light">@CL["Organization"]</div>
+        <div class="card-body">
+            <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                <input type="hidden" asp-for="Id" />
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Name" class="form-label">@CL["Name"]</label>
+                        <input asp-for="Name" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="EmailDomains" class="form-label">@CL["Domains"]</label>
+                        <input asp-for="EmailDomains" class="form-control" />
+                        <div class="form-text">@CL["DomainsHelp"]</div>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Notes" class="form-label">@CL["Notes"]</label>
+                        <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="col-12 form-check ms-2">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label">@CL["ActiveHelp"]</label>
+                    </div>
+                </div>
+                <div class="mt-3"><button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>@CL["Save"]</button></div>
+            </form>
+            <hr />
+            <div class="small text-muted">
+                @CL["Retention"]: @CL["YearsValue", Model.RetentionYears]
+                &middot; @CL["LegalHold"]: @(Model.LegalHold ? CL["Yes"] : CL["No"])
+                &middot; @CL["SupportAccess"]: @(Model.AllowProviderAccess ? CL["Allowed"] : CL["NotAllowed"])
+                <div>@CL["OrganizationSettingsOwnedByCustomer"]</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-light">@CL["OrganizationAdmins"]</div>
+        <div class="card-body">
+            <table class="table table-sm">
+                <thead><tr><th>@CL["Username"]</th><th>@CL["Email"]</th><th>@CL["Status"]</th></tr></thead>
+                <tbody>
+                    @foreach (var a in admins)
+                    {
+                        <tr>
+                            <td>@a.Username @if (a.IsOidc) { <span class="badge bg-info">OIDC</span> }</td>
+                            <td>@a.Email</td>
+                            <td>@(a.IsActive ? CL["Active"] : CL["Inactive"])</td>
+                        </tr>
+                    }
+                    @if (!admins.Any())
+                    {
+                        <tr><td colspan="3" class="text-muted">@CL["NoAdmins"]</td></tr>
+                    }
+                </tbody>
+            </table>
+            <p class="small text-muted">@CL["CreateAdminHelp"]</p>
+            <form asp-action="CreateAdmin" asp-route-id="@Model.Id" method="post" class="row g-2">
+                <div class="col-md-4"><input name="username" class="form-control" placeholder="@CL["Username"]" required autocomplete="off" /></div>
+                <div class="col-md-4"><input name="email" type="email" class="form-control" placeholder="@CL["Email"]" autocomplete="off" /></div>
+                <div class="col-md-3"><input name="password" type="password" class="form-control" placeholder="@CL["Password"]" minlength="12" required autocomplete="new-password" /></div>
+                <div class="col-md-1"><button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-person-plus"></i></button></div>
+            </form>
+        </div>
+    </div>
+
+    @if (unassigned.Any())
+    {
+        <div class="card mb-3">
+            <div class="card-header bg-light">@CL["UnassignedUsers"]</div>
+            <div class="card-body">
+                <p class="small text-muted">@CL["UnassignedUsersHelp"]</p>
+                <table class="table table-sm mb-0">
+                    @foreach (var u in unassigned)
+                    {
+                        <tr>
+                            <td>@u.Username</td>
+                            <td>@u.Email</td>
+                            <td class="text-end">
+                                <form asp-action="AssignUser" asp-route-id="@Model.Id" method="post">
+                                    <input type="hidden" name="userId" value="@u.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">@CL["AssignToOrganization"]</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </div>
+    }
+</div>

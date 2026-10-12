@@ -105,6 +105,7 @@
                                 </a>
                             </li>
                         }
+                        @await Html.PartialAsync("_OrganizationNav")
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["Controller"].ToString() == "Logs" ? "active" : "")"
                                 asp-controller="Logs" asp-action="Index">
@@ -127,6 +128,7 @@
     </header>
     <div class="container-fluid body-content">
         <main role="main" class="pb-3">
+            @await Html.PartialAsync("_SupportAccessBanner")
             @if (TempData["SuccessMessage"] != null)
             {
                 <div class="alert alert-success alert-dismissible fade show" role="alert">

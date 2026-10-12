@@ -2926,6 +2926,12 @@ namespace MailArchiver.Controllers
                 
                 TempData["SuccessMessage"] = "Email successfully deleted.";
             }
+            catch (Exception ex) when (MailArchiver.Services.Compliance.RetentionGuard.Describe(ex, ComplianceLocalizer) is string refusal)
+            {
+                // Retention period or legal hold (enforced by the database)
+                _logger.LogInformation("Deletion of email {EmailId} refused: {Reason}", id, refusal);
+                TempData["ErrorMessage"] = refusal;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting email with ID {EmailId}", id);
@@ -2935,6 +2941,9 @@ namespace MailArchiver.Controllers
             return Redirect(returnUrl ?? Url.Action("Index"));
         }
         
+        private Microsoft.Extensions.Localization.IStringLocalizer<ComplianceResource> ComplianceLocalizer =>
+            HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<ComplianceResource>>();
+
         // POST: Emails/DeleteSelected
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -2999,6 +3008,20 @@ namespace MailArchiver.Controllers
                 }
             }
             
+            // Emails within their retention period or on legal hold are kept; the database would
+            // refuse them one by one otherwise.
+            var (deletableIds, protectedIds) = await MailArchiver.Services.Compliance.RetentionGuard.SplitAsync(_context, ids);
+            if (protectedIds.Count > 0)
+            {
+                if (!deletableIds.Any())
+                {
+                    TempData["ErrorMessage"] = ComplianceLocalizer["ProtectedEmailsKept", protectedIds.Count].Value;
+                    return Redirect(returnUrl ?? Url.Action("Index"));
+                }
+                TempData["WarningMessage"] = ComplianceLocalizer["ProtectedEmailsKept", protectedIds.Count].Value;
+                ids = deletableIds;
+            }
+
             // Check if we should use async deletion for large selections (threshold: 100 emails)
             const int asyncThreshold = 100;
             if (ids.Count >= asyncThreshold && _emailDeletionService != null)
@@ -3070,6 +3093,8 @@ namespace MailArchiver.Controllers
                     {
                         _logger.LogError(ex, "Error deleting email with ID {EmailId}", id);
                         errorCount++;
+                        // Forget the failed removal, or every following SaveChanges retries it.
+                        _context.ChangeTracker.Clear();
                     }
                 }
                 

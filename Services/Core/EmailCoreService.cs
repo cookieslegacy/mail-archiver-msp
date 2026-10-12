@@ -237,6 +237,14 @@ namespace MailArchiver.Services.Core
                 }
             }
 
+            // Organization: this search runs as raw SQL, which the EF query filters do not reach.
+            if (!_context.OrganizationScope.IsSystem)
+            {
+                whereConditions.Add($@"""MailAccountId"" IN (SELECT oa.""Id"" FROM mail_archiver.""MailAccounts"" oa WHERE oa.""OrganizationId"" = @param{paramCounter})");
+                parameters.Add(new Npgsql.NpgsqlParameter($"@param{paramCounter}", _context.OrganizationScope.OrganizationId ?? -1));
+                paramCounter++;
+            }
+
             // Date filtering
             if (fromDate.HasValue)
             {
@@ -363,6 +371,8 @@ namespace MailArchiver.Services.Core
         {
             using var connection = new Npgsql.NpgsqlConnection(_context.Database.GetConnectionString());
             await connection.OpenAsync();
+            // Same row level security scope as the EF connections (OrganizationConnectionInterceptor).
+            await MailArchiver.Data.OrganizationConnectionInterceptor.ApplyScopeAsync(connection, _context);
 
             using var command = new Npgsql.NpgsqlCommand(sql, connection);
             foreach (var parameter in parameters)
@@ -380,6 +390,8 @@ namespace MailArchiver.Services.Core
 
             using var connection = new Npgsql.NpgsqlConnection(_context.Database.GetConnectionString());
             await connection.OpenAsync();
+            // Same row level security scope as the EF connections (OrganizationConnectionInterceptor).
+            await MailArchiver.Data.OrganizationConnectionInterceptor.ApplyScopeAsync(connection, _context);
 
             using var command = new Npgsql.NpgsqlCommand(sql, connection);
             foreach (var parameter in parameters)

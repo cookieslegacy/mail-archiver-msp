@@ -186,4 +186,48 @@ public class OrganizationIsolationTests : ComplianceTestBase
         noOrg.MailAccounts.Add(new MailAccount { Name = "x", EmailAddress = "x@test.local", LastSync = DateTime.UtcNow });
         await Assert.ThrowsAsync<InvalidOperationException>(() => noOrg.SaveChangesAsync());
     }
+
+    [Fact]
+    public async Task FindById_DoesNotReachIntoAnotherOrganization()
+    {
+        int orgA, accountB, emailB;
+        await using (var ctx = SystemContext())
+        {
+            var a = await CreateOrganizationAsync(ctx);
+            var b = await CreateOrganizationAsync(ctx);
+            var accB = await CreateAccountAsync(ctx, b);
+            var mail = NewEmail(accB);
+            ctx.ArchivedEmails.Add(mail);
+            await ctx.SaveChangesAsync();
+            (orgA, accountB, emailB) = (a.Id, accB.Id, mail.Id);
+        }
+
+        await using var userOfA = ContextFor(orgA);
+        Assert.Null(await userOfA.MailAccounts.FindAsync(accountB));
+        Assert.Null(await userOfA.ArchivedEmails.FindAsync(emailB));
+    }
+
+    [Fact]
+    public async Task EmailSearch_OfAnOrganizationAdmin_StaysInsideTheOrganization()
+    {
+        int orgA;
+        await using (var ctx = SystemContext())
+        {
+            var a = await CreateOrganizationAsync(ctx);
+            var b = await CreateOrganizationAsync(ctx);
+            ctx.ArchivedEmails.Add(NewEmail(await CreateAccountAsync(ctx, a), "search-mine-" + a.Id));
+            ctx.ArchivedEmails.Add(NewEmail(await CreateAccountAsync(ctx, b), "search-foreign-" + a.Id));
+            await ctx.SaveChangesAsync();
+            orgA = a.Id;
+        }
+
+        await using var userOfA = ContextFor(orgA);
+        var service = ServiceFactory.CreateEmailCoreService(userOfA);
+        // Admin scope (no account list), with and without a search term.
+        var (all, _) = await service.SearchEmailsAsync(null, null, null, null, null, null, 0, 1000);
+        Assert.All(all, e => Assert.NotEqual("search-foreign-" + orgA, e.Subject));
+        Assert.Contains(all, e => e.Subject == "search-mine-" + orgA);
+        var (found, total) = await service.SearchEmailsAsync("search", null, null, null, null, null, 0, 1000);
+        Assert.DoesNotContain(found, e => e.Subject == "search-foreign-" + orgA);
+    }
 }

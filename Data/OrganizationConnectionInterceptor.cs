@@ -47,6 +47,19 @@ namespace MailArchiver.Data
             return command;
         }
 
+        /// <summary>For connections opened outside EF (raw Npgsql), so row level security applies to them too.</summary>
+        public static async Task ApplyScopeAsync(DbConnection connection, MailArchiverDbContext context,
+            CancellationToken cancellationToken = default)
+        {
+            await using var command = connection.CreateCommand();
+            command.CommandText = $"SELECT set_config('{SettingName}', @org, false)";
+            var parameter = command.CreateParameter();
+            parameter.ParameterName = "org";
+            parameter.Value = ScopeValue(context);
+            command.Parameters.Add(parameter);
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
         internal static string ScopeValue(MailArchiverDbContext context)
         {
             var scope = context.OrganizationScope;

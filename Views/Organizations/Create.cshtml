@@ -1,0 +1,68 @@
+@model MailArchiver.Controllers.OrganizationCreateViewModel
+@{
+    ViewData["Title"] = CL["NewOrganization"];
+}
+<div class="container" style="max-width: 820px">
+    <h1 class="h3 mb-3"><i class="bi bi-building-add me-2"></i>@CL["NewOrganization"]</h1>
+    <form asp-action="Create" method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+        <div class="card mb-3">
+            <div class="card-header bg-light">@CL["Organization"]</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-7">
+                        <label asp-for="Name" class="form-label">@CL["Name"]</label>
+                        <input asp-for="Name" class="form-control" required />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-5">
+                        <label asp-for="Slug" class="form-label">@CL["Slug"]</label>
+                        <input asp-for="Slug" class="form-control" pattern="[a-z0-9][a-z0-9-]*" required />
+                        <div class="form-text">@CL["SlugHelp"]</div>
+                        <span asp-validation-for="Slug" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-8">
+                        <label asp-for="EmailDomains" class="form-label">@CL["Domains"]</label>
+                        <input asp-for="EmailDomains" class="form-control" placeholder="example.com, example.de" />
+                        <div class="form-text">@CL["DomainsHelp"]</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="RetentionYears" class="form-label">@CL["RetentionYears"]</label>
+                        <input asp-for="RetentionYears" type="number" min="0" max="100" class="form-control" />
+                        <div class="form-text">@CL["RetentionYearsShortHelp"]</div>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Notes" class="form-label">@CL["Notes"]</label>
+                        <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-3">
+            <div class="card-header bg-light">@CL["FirstAdmin"]</div>
+            <div class="card-body">
+                <p class="small text-muted">@CL["FirstAdminHelp"]</p>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="AdminUsername" class="form-label">@CL["Username"]</label>
+                        <input asp-for="AdminUsername" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="AdminUsername" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="AdminEmail" class="form-label">@CL["Email"]</label>
+                        <input asp-for="AdminEmail" type="email" class="form-control" autocomplete="off" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="AdminPassword" class="form-label">@CL["Password"]</label>
+                        <input asp-for="AdminPassword" type="password" class="form-control" autocomplete="new-password" />
+                        <span asp-validation-for="AdminPassword" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>@CL["Create"]</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">@CL["Cancel"]</a>
+        </div>
+    </form>
+</div>

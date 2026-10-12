@@ -1,0 +1,22 @@
+@using MailArchiver.Services.Organizations
+@inject IOrganizationContext BannerScope
+@if (BannerScope.IsProviderSupportAccess)
+{
+    var organization = BannerScope.OrganizationId is int id
+        ? await Context.RequestServices.GetRequiredService<IOrganizationService>().GetAsync(id)
+        : null;
+    <div class="alert alert-warning d-flex flex-wrap align-items-center gap-2" role="alert">
+        <i class="bi bi-life-preserver"></i>
+        <span>@CL["SupportAccessActive", organization?.Name ?? "?"]</span>
+        <form asp-controller="Organizations" asp-action="LeaveSupport" method="post" class="ms-auto">
+            <button type="submit" class="btn btn-sm btn-dark">@CL["LeaveSupport"]</button>
+        </form>
+    </div>
+}
+@if (TempData["WarningMessage"] is string warning)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="bi bi-shield-exclamation me-2"></i>@warning
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}

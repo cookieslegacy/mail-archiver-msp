@@ -1,0 +1,480 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Account" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="AccountHasProtectedEmails" xml:space="preserve">
+    <value>The mail account {0} still holds {1} emails within their legal retention period or on legal hold, so it cannot be deleted. Disable it instead; it can be deleted once nothing is kept any more.</value>
+  </data>
+  <data name="AccountRetention" xml:space="preserve">
+    <value>Retention per mail account</value>
+  </data>
+  <data name="AccountRetentionHelp" xml:space="preserve">
+    <value>Empty = organization default. A longer or shorter period applies to emails archived from now on; stored retention dates are never shortened.</value>
+  </data>
+  <data name="Active" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="ActiveHelp" xml:space="preserve">
+    <value>Active (users of an inactive organization cannot sign in; archiving continues)</value>
+  </data>
+  <data name="AdminCreated" xml:space="preserve">
+    <value>Admin {0} created.</value>
+  </data>
+  <data name="AdminPasswordTooShort" xml:space="preserve">
+    <value>The admin password must have at least 12 characters.</value>
+  </data>
+  <data name="AllowProviderAccess" xml:space="preserve">
+    <value>Allow support access by the service provider</value>
+  </data>
+  <data name="AllowProviderAccessHelp" xml:space="preserve">
+    <value>While allowed, the provider's admins can open this organization's archive for support. Every access, with its reason, is written to this organization's audit log.</value>
+  </data>
+  <data name="Allowed" xml:space="preserve">
+    <value>allowed</value>
+  </data>
+  <data name="Anchors" xml:space="preserve">
+    <value>Anchors</value>
+  </data>
+  <data name="ArchiveEvidence" xml:space="preserve">
+    <value>Archive evidence</value>
+  </data>
+  <data name="ArchivedAt" xml:space="preserve">
+    <value>Archived</value>
+  </data>
+  <data name="AssignToOrganization" xml:space="preserve">
+    <value>Assign</value>
+  </data>
+  <data name="AuditChain" xml:space="preserve">
+    <value>Audit log chain</value>
+  </data>
+  <data name="AuditEntries" xml:space="preserve">
+    <value>Audit entries</value>
+  </data>
+  <data name="Auditor" xml:space="preserve">
+    <value>Auditor (read only)</value>
+  </data>
+  <data name="AuditorRoleDescription" xml:space="preserve">
+    <value>Can read and export every mail account of the organization, e.g. for a tax audit, but change nothing.</value>
+  </data>
+  <data name="AutoPurgeExpired" xml:space="preserve">
+    <value>Delete emails automatically when their retention has expired</value>
+  </data>
+  <data name="AutoPurgeExpiredHelp" xml:space="preserve">
+    <value>Required by data protection law for personal data that no longer has to be kept. The original's chain entry stays as proof of the deletion.</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="By" xml:space="preserve">
+    <value>By</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Chain" xml:space="preserve">
+    <value>Chain</value>
+  </data>
+  <data name="ChainEmpty" xml:space="preserve">
+    <value>No entries yet.</value>
+  </data>
+  <data name="ChainEntry" xml:space="preserve">
+    <value>Chain entry</value>
+  </data>
+  <data name="ChainHash" xml:space="preserve">
+    <value>Chain hash</value>
+  </data>
+  <data name="ChainHead" xml:space="preserve">
+    <value>Chain head</value>
+  </data>
+  <data name="Chain_audit" xml:space="preserve">
+    <value>Audit log</value>
+  </data>
+  <data name="Chain_originals" xml:space="preserve">
+    <value>Originals</value>
+  </data>
+  <data name="Compliance" xml:space="preserve">
+    <value>Compliance</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="CreateAdminHelp" xml:space="preserve">
+    <value>Create an additional admin, e.g. when the organization's admins are locked out. This is recorded in the organization's audit log.</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="DefaultOrganizationStaysActive" xml:space="preserve">
+    <value>The default organization cannot be deactivated.</value>
+  </data>
+  <data name="DeleteRefusedLegalHold" xml:space="preserve">
+    <value>The email is on legal hold (itself, its mail account or the organization) and cannot be deleted.</value>
+  </data>
+  <data name="DeleteRefusedRetention" xml:space="preserve">
+    <value>The email is still within its legal retention period and cannot be deleted.</value>
+  </data>
+  <data name="Detail" xml:space="preserve">
+    <value>Detail</value>
+  </data>
+  <data name="Domains" xml:space="preserve">
+    <value>Mail domains</value>
+  </data>
+  <data name="DomainsHelp" xml:space="preserve">
+    <value>Comma separated. Users signing in via OIDC with an address of these domains are created in this organization.</value>
+  </data>
+  <data name="DownloadOriginal" xml:space="preserve">
+    <value>Original (.eml)</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Emails" xml:space="preserve">
+    <value>Emails</value>
+  </data>
+  <data name="EmailsInArchive" xml:space="preserve">
+    <value>Emails in the archive</value>
+  </data>
+  <data name="EnterSupport" xml:space="preserve">
+    <value>Open for support</value>
+  </data>
+  <data name="Expired" xml:space="preserve">
+    <value>Expired</value>
+  </data>
+  <data name="ExportChain" xml:space="preserve">
+    <value>Export chain (CSV)</value>
+  </data>
+  <data name="Failed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="Finished" xml:space="preserve">
+    <value>Finished</value>
+  </data>
+  <data name="FirstAdmin" xml:space="preserve">
+    <value>First admin (optional)</value>
+  </data>
+  <data name="FirstAdminHelp" xml:space="preserve">
+    <value>The organization's own admin, who manages its users, mail accounts and retention. Leave empty to add admins later or let them sign in via OIDC.</value>
+  </data>
+  <data name="HashChains" xml:space="preserve">
+    <value>Hash chains</value>
+  </data>
+  <data name="HoldEmailsCount" xml:space="preserve">
+    <value>{0} emails</value>
+  </data>
+  <data name="HoldInherited" xml:space="preserve">
+    <value>(legal hold of account or organization)</value>
+  </data>
+  <data name="HoldWholeOrganization" xml:space="preserve">
+    <value>Whole organization</value>
+  </data>
+  <data name="Inactive" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+  <data name="LastVerification" xml:space="preserve">
+    <value>Last verification</value>
+  </data>
+  <data name="LeaveSupport" xml:space="preserve">
+    <value>End support access</value>
+  </data>
+  <data name="LegacySealed" xml:space="preserve">
+    <value>sealed (archived before)</value>
+  </data>
+  <data name="LegalHold" xml:space="preserve">
+    <value>Legal hold</value>
+  </data>
+  <data name="LegalHoldOrganization" xml:space="preserve">
+    <value>Legal hold for the whole organization (nothing is deleted)</value>
+  </data>
+  <data name="LegalHoldReason" xml:space="preserve">
+    <value>Reason / case reference</value>
+  </data>
+  <data name="LegalHoldReasonRequired" xml:space="preserve">
+    <value>Please give a reason for the legal hold.</value>
+  </data>
+  <data name="LegalHoldReleased" xml:space="preserve">
+    <value>Legal hold released.</value>
+  </data>
+  <data name="LegalHoldSet" xml:space="preserve">
+    <value>Legal hold set.</value>
+  </data>
+  <data name="MailAccounts" xml:space="preserve">
+    <value>Mail accounts</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="NameRequired" xml:space="preserve">
+    <value>A name is required.</value>
+  </data>
+  <data name="NeverVerified" xml:space="preserve">
+    <value>Not verified yet</value>
+  </data>
+  <data name="NewOrganization" xml:space="preserve">
+    <value>New organization</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>no</value>
+  </data>
+  <data name="NoAdmins" xml:space="preserve">
+    <value>No admins yet.</value>
+  </data>
+  <data name="NoAnchors" xml:space="preserve">
+    <value>No anchors yet; they are created daily.</value>
+  </data>
+  <data name="NoOrganization" xml:space="preserve">
+    <value>Your user does not belong to an organization.</value>
+  </data>
+  <data name="NoOriginalLegacy" xml:space="preserve">
+    <value>This email was archived before originals were kept; it is sealed, but there is no original file.</value>
+  </data>
+  <data name="NotAllowed" xml:space="preserve">
+    <value>not allowed</value>
+  </data>
+  <data name="NotSealedYet" xml:space="preserve">
+    <value>not sealed yet</value>
+  </data>
+  <data name="Notes" xml:space="preserve">
+    <value>Notes</value>
+  </data>
+  <data name="Organization" xml:space="preserve">
+    <value>Organization</value>
+  </data>
+  <data name="OrganizationAdmins" xml:space="preserve">
+    <value>Admins of the organization</value>
+  </data>
+  <data name="OrganizationCreated" xml:space="preserve">
+    <value>Organization {0} created.</value>
+  </data>
+  <data name="OrganizationSaved" xml:space="preserve">
+    <value>Organization saved.</value>
+  </data>
+  <data name="OrganizationSettingsOwnedByCustomer" xml:space="preserve">
+    <value>Retention, legal hold and support access are set by the organization's own admins.</value>
+  </data>
+  <data name="Organizations" xml:space="preserve">
+    <value>Organizations</value>
+  </data>
+  <data name="OrganizationsIntro" xml:space="preserve">
+    <value>Each organization is a separate archive: its users never see another organization's data. Provider admins see names and counts here, but no content.</value>
+  </data>
+  <data name="OriginalHashMismatch" xml:space="preserve">
+    <value>The stored original does not match its SHA-256. Run an integrity verification.</value>
+  </data>
+  <data name="OriginalPurged" xml:space="preserve">
+    <value>The original was deleted after its retention period.</value>
+  </data>
+  <data name="Originals" xml:space="preserve">
+    <value>Originals</value>
+  </data>
+  <data name="OriginalsChain" xml:space="preserve">
+    <value>Originals chain</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="Problem" xml:space="preserve">
+    <value>Problem</value>
+  </data>
+  <data name="ProblemsFound" xml:space="preserve">
+    <value>Problems found</value>
+  </data>
+  <data name="ProtectedEmailsKept" xml:space="preserve">
+    <value>{0} emails are within their retention period or on legal hold and were kept.</value>
+  </data>
+  <data name="PurgeExpiredConfirm" xml:space="preserve">
+    <value>Delete {0} emails whose retention has expired? This cannot be undone.</value>
+  </data>
+  <data name="PurgeExpiredNow" xml:space="preserve">
+    <value>Delete {0} expired emails now</value>
+  </data>
+  <data name="Purged" xml:space="preserve">
+    <value>Deleted</value>
+  </data>
+  <data name="PurgedExpired" xml:space="preserve">
+    <value>{0} emails with expired retention were deleted.</value>
+  </data>
+  <data name="Reason" xml:space="preserve">
+    <value>Reason</value>
+  </data>
+  <data name="ReleaseLegalHold" xml:space="preserve">
+    <value>Release legal hold</value>
+  </data>
+  <data name="RetainUntil" xml:space="preserve">
+    <value>Retained until</value>
+  </data>
+  <data name="Retention" xml:space="preserve">
+    <value>Retention</value>
+  </data>
+  <data name="RetentionCannotBeShortened" xml:space="preserve">
+    <value>A retention period can be extended but not shortened.</value>
+  </data>
+  <data name="RetentionExpired" xml:space="preserve">
+    <value>expired</value>
+  </data>
+  <data name="RetentionPending" xml:space="preserve">
+    <value>being calculated</value>
+  </data>
+  <data name="RetentionSettings" xml:space="preserve">
+    <value>Retention and legal hold</value>
+  </data>
+  <data name="RetentionYears" xml:space="preserve">
+    <value>Retention in years</value>
+  </data>
+  <data name="RetentionYearsHelp" xml:space="preserve">
+    <value>Counted from the end of the calendar year of the email (§ 147 AO). Commercial letters: 6 years, accounting vouchers: 8 years, books and records: 10 years. 0 = no retention obligation. Applies to emails archived from now on; stored retention dates are never shortened.</value>
+  </data>
+  <data name="RetentionYearsRange" xml:space="preserve">
+    <value>The retention must be between 0 and 100 years.</value>
+  </data>
+  <data name="RetentionYearsShortHelp" xml:space="preserve">
+    <value>From the end of the calendar year (§ 147 AO); 0 = none.</value>
+  </data>
+  <data name="RunVerification" xml:space="preserve">
+    <value>Verify integrity now</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="SetLegalHold" xml:space="preserve">
+    <value>Set legal hold</value>
+  </data>
+  <data name="SettingsSaved" xml:space="preserve">
+    <value>Settings saved.</value>
+  </data>
+  <data name="Sha256Original" xml:space="preserve">
+    <value>SHA-256 of the original</value>
+  </data>
+  <data name="Sha256Seal" xml:space="preserve">
+    <value>SHA-256 seal of the stored fields</value>
+  </data>
+  <data name="Slug" xml:space="preserve">
+    <value>Short key</value>
+  </data>
+  <data name="SlugHelp" xml:space="preserve">
+    <value>Lower case letters, digits and hyphens; used in storage paths and cannot be changed later.</value>
+  </data>
+  <data name="SlugTaken" xml:space="preserve">
+    <value>This short key is already used.</value>
+  </data>
+  <data name="Source_graph" xml:space="preserve">
+    <value>original from Microsoft 365</value>
+  </data>
+  <data name="Source_imap" xml:space="preserve">
+    <value>original from IMAP</value>
+  </data>
+  <data name="Source_import-eml" xml:space="preserve">
+    <value>original from EML import</value>
+  </data>
+  <data name="Source_import-mbox" xml:space="preserve">
+    <value>original from MBox import</value>
+  </data>
+  <data name="Source_legacy-seal" xml:space="preserve">
+    <value>sealed existing email (no original file)</value>
+  </data>
+  <data name="Source_serialized" xml:space="preserve">
+    <value>re-serialized (raw bytes were not available)</value>
+  </data>
+  <data name="Started" xml:space="preserve">
+    <value>Started</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Status_Error" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="Status_Failed" xml:space="preserve">
+    <value>Problems found</value>
+  </data>
+  <data name="Status_Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Status_Running" xml:space="preserve">
+    <value>Running</value>
+  </data>
+  <data name="Storage" xml:space="preserve">
+    <value>Storage</value>
+  </data>
+  <data name="SupportAccess" xml:space="preserve">
+    <value>Support access</value>
+  </data>
+  <data name="SupportAccessActive" xml:space="preserve">
+    <value>Support access to {0} is active. Everything you do is recorded in this organization's audit log.</value>
+  </data>
+  <data name="SupportAccessExplanation" xml:space="preserve">
+    <value>You will see this organization's archive with your own rights. The access, its reason and everything you do are written to the organization's audit log.</value>
+  </data>
+  <data name="SupportAccessNotAllowed" xml:space="preserve">
+    <value>This organization has not allowed support access.</value>
+  </data>
+  <data name="SupportAccessTo" xml:space="preserve">
+    <value>Support access to {0}</value>
+  </data>
+  <data name="SupportNotAllowedHint" xml:space="preserve">
+    <value>The organization has not allowed support access.</value>
+  </data>
+  <data name="SupportReasonRequired" xml:space="preserve">
+    <value>Please give a reason for the support access.</value>
+  </data>
+  <data name="UnassignedUsers" xml:space="preserve">
+    <value>Users without organization</value>
+  </data>
+  <data name="UnassignedUsersHelp" xml:space="preserve">
+    <value>New OIDC users whose mail domain belongs to no organization wait here and see nothing until they are assigned.</value>
+  </data>
+  <data name="UserAssigned" xml:space="preserve">
+    <value>User {0} assigned.</value>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="UsernameTaken" xml:space="preserve">
+    <value>This username or email address is already used.</value>
+  </data>
+  <data name="Users" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="Verification" xml:space="preserve">
+    <value>Integrity verification</value>
+  </data>
+  <data name="VerificationQueueFull" xml:space="preserve">
+    <value>Too many verifications are waiting; please try again later.</value>
+  </data>
+  <data name="VerificationQueued" xml:space="preserve">
+    <value>The integrity verification has been started; the result appears below when it is finished.</value>
+  </data>
+  <data name="Verifications" xml:space="preserve">
+    <value>Integrity verifications</value>
+  </data>
+  <data name="WithOriginal" xml:space="preserve">
+    <value>with original</value>
+  </data>
+  <data name="WormDisabled" xml:space="preserve">
+    <value>Not configured: originals are kept in the database only. For evidence that also holds against administrators, configure S3 Object Lock (see documentation).</value>
+  </data>
+  <data name="WormHint" xml:space="preserve">
+    <value>The original is stored write-once (S3 Object Lock) until the end of its retention.</value>
+  </data>
+  <data name="WormStorage" xml:space="preserve">
+    <value>WORM storage</value>
+  </data>
+  <data name="YearsValue" xml:space="preserve">
+    <value>{0} years</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>yes</value>
+  </data>
+</root>

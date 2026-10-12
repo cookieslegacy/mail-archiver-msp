@@ -1,0 +1,480 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Account" xml:space="preserve">
+    <value>Konto</value>
+  </data>
+  <data name="AccountHasProtectedEmails" xml:space="preserve">
+    <value>Das Postfach {0} enthält noch {1} E-Mails mit laufender Aufbewahrungsfrist oder Legal Hold und kann deshalb nicht gelöscht werden. Deaktivieren Sie es stattdessen; gelöscht werden kann es, sobald nichts mehr aufbewahrt werden muss.</value>
+  </data>
+  <data name="AccountRetention" xml:space="preserve">
+    <value>Aufbewahrung je Postfach</value>
+  </data>
+  <data name="AccountRetentionHelp" xml:space="preserve">
+    <value>Leer = Vorgabe der Organisation. Eine geänderte Frist gilt für ab jetzt archivierte E-Mails; bereits gespeicherte Fristen werden nie verkürzt.</value>
+  </data>
+  <data name="Active" xml:space="preserve">
+    <value>Aktiv</value>
+  </data>
+  <data name="ActiveHelp" xml:space="preserve">
+    <value>Aktiv (Benutzer einer inaktiven Organisation können sich nicht anmelden; die Archivierung läuft weiter)</value>
+  </data>
+  <data name="AdminCreated" xml:space="preserve">
+    <value>Admin {0} angelegt.</value>
+  </data>
+  <data name="AdminPasswordTooShort" xml:space="preserve">
+    <value>Das Admin-Passwort muss mindestens 12 Zeichen haben.</value>
+  </data>
+  <data name="AllowProviderAccess" xml:space="preserve">
+    <value>Support-Zugriff durch den Dienstleister erlauben</value>
+  </data>
+  <data name="AllowProviderAccessHelp" xml:space="preserve">
+    <value>Solange erlaubt, können die Admins des Dienstleisters dieses Archiv für Supportzwecke öffnen. Jeder Zugriff wird mit Begründung im Audit-Log dieser Organisation protokolliert.</value>
+  </data>
+  <data name="Allowed" xml:space="preserve">
+    <value>erlaubt</value>
+  </data>
+  <data name="Anchors" xml:space="preserve">
+    <value>Anker</value>
+  </data>
+  <data name="ArchiveEvidence" xml:space="preserve">
+    <value>Archivnachweis</value>
+  </data>
+  <data name="ArchivedAt" xml:space="preserve">
+    <value>Archiviert</value>
+  </data>
+  <data name="AssignToOrganization" xml:space="preserve">
+    <value>Zuordnen</value>
+  </data>
+  <data name="AuditChain" xml:space="preserve">
+    <value>Kette des Audit-Logs</value>
+  </data>
+  <data name="AuditEntries" xml:space="preserve">
+    <value>Audit-Einträge</value>
+  </data>
+  <data name="Auditor" xml:space="preserve">
+    <value>Prüfer (nur lesen)</value>
+  </data>
+  <data name="AuditorRoleDescription" xml:space="preserve">
+    <value>Kann alle Postfächer der Organisation lesen und exportieren, z. B. für eine Betriebsprüfung, aber nichts ändern.</value>
+  </data>
+  <data name="AutoPurgeExpired" xml:space="preserve">
+    <value>E-Mails nach Ablauf der Aufbewahrungsfrist automatisch löschen</value>
+  </data>
+  <data name="AutoPurgeExpiredHelp" xml:space="preserve">
+    <value>Nach DSGVO für personenbezogene Daten geboten, die nicht mehr aufbewahrt werden müssen. Der Ketteneintrag des Originals bleibt als Löschnachweis erhalten.</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Zurück</value>
+  </data>
+  <data name="By" xml:space="preserve">
+    <value>Durch</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="Chain" xml:space="preserve">
+    <value>Kette</value>
+  </data>
+  <data name="ChainEmpty" xml:space="preserve">
+    <value>Noch keine Einträge.</value>
+  </data>
+  <data name="ChainEntry" xml:space="preserve">
+    <value>Ketteneintrag</value>
+  </data>
+  <data name="ChainHash" xml:space="preserve">
+    <value>Kettenhash</value>
+  </data>
+  <data name="ChainHead" xml:space="preserve">
+    <value>Kettenende</value>
+  </data>
+  <data name="Chain_audit" xml:space="preserve">
+    <value>Audit-Log</value>
+  </data>
+  <data name="Chain_originals" xml:space="preserve">
+    <value>Originale</value>
+  </data>
+  <data name="Compliance" xml:space="preserve">
+    <value>Compliance</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>Anlegen</value>
+  </data>
+  <data name="CreateAdminHelp" xml:space="preserve">
+    <value>Zusätzlichen Admin anlegen, z. B. wenn die Admins der Organisation ausgesperrt sind. Das wird im Audit-Log der Organisation protokolliert.</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>Erstellt</value>
+  </data>
+  <data name="DefaultOrganizationStaysActive" xml:space="preserve">
+    <value>Die Standard-Organisation kann nicht deaktiviert werden.</value>
+  </data>
+  <data name="DeleteRefusedLegalHold" xml:space="preserve">
+    <value>Die E-Mail steht unter Legal Hold (selbst, ihr Postfach oder die Organisation) und kann nicht gelöscht werden.</value>
+  </data>
+  <data name="DeleteRefusedRetention" xml:space="preserve">
+    <value>Die E-Mail befindet sich noch in der gesetzlichen Aufbewahrungsfrist und kann nicht gelöscht werden.</value>
+  </data>
+  <data name="Detail" xml:space="preserve">
+    <value>Detail</value>
+  </data>
+  <data name="Domains" xml:space="preserve">
+    <value>Mail-Domains</value>
+  </data>
+  <data name="DomainsHelp" xml:space="preserve">
+    <value>Kommagetrennt. Benutzer, die sich per OIDC mit einer Adresse dieser Domains anmelden, werden in dieser Organisation angelegt.</value>
+  </data>
+  <data name="DownloadOriginal" xml:space="preserve">
+    <value>Original (.eml)</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>E-Mail</value>
+  </data>
+  <data name="Emails" xml:space="preserve">
+    <value>E-Mails</value>
+  </data>
+  <data name="EmailsInArchive" xml:space="preserve">
+    <value>E-Mails im Archiv</value>
+  </data>
+  <data name="EnterSupport" xml:space="preserve">
+    <value>Für Support öffnen</value>
+  </data>
+  <data name="Expired" xml:space="preserve">
+    <value>Abgelaufen</value>
+  </data>
+  <data name="ExportChain" xml:space="preserve">
+    <value>Kette exportieren (CSV)</value>
+  </data>
+  <data name="Failed" xml:space="preserve">
+    <value>Fehlerhaft</value>
+  </data>
+  <data name="Finished" xml:space="preserve">
+    <value>Beendet</value>
+  </data>
+  <data name="FirstAdmin" xml:space="preserve">
+    <value>Erster Admin (optional)</value>
+  </data>
+  <data name="FirstAdminHelp" xml:space="preserve">
+    <value>Der eigene Admin der Organisation, der Benutzer, Postfächer und Aufbewahrung verwaltet. Leer lassen, um Admins später anzulegen oder per OIDC anzumelden.</value>
+  </data>
+  <data name="HashChains" xml:space="preserve">
+    <value>Hash-Ketten</value>
+  </data>
+  <data name="HoldEmailsCount" xml:space="preserve">
+    <value>{0} E-Mails</value>
+  </data>
+  <data name="HoldInherited" xml:space="preserve">
+    <value>(Legal Hold von Postfach oder Organisation)</value>
+  </data>
+  <data name="HoldWholeOrganization" xml:space="preserve">
+    <value>Gesamte Organisation</value>
+  </data>
+  <data name="Inactive" xml:space="preserve">
+    <value>Inaktiv</value>
+  </data>
+  <data name="LastVerification" xml:space="preserve">
+    <value>Letzte Prüfung</value>
+  </data>
+  <data name="LeaveSupport" xml:space="preserve">
+    <value>Support-Zugriff beenden</value>
+  </data>
+  <data name="LegacySealed" xml:space="preserve">
+    <value>versiegelt (Altbestand)</value>
+  </data>
+  <data name="LegalHold" xml:space="preserve">
+    <value>Legal Hold</value>
+  </data>
+  <data name="LegalHoldOrganization" xml:space="preserve">
+    <value>Legal Hold für die gesamte Organisation (nichts wird gelöscht)</value>
+  </data>
+  <data name="LegalHoldReason" xml:space="preserve">
+    <value>Grund / Aktenzeichen</value>
+  </data>
+  <data name="LegalHoldReasonRequired" xml:space="preserve">
+    <value>Bitte einen Grund für den Legal Hold angeben.</value>
+  </data>
+  <data name="LegalHoldReleased" xml:space="preserve">
+    <value>Legal Hold aufgehoben.</value>
+  </data>
+  <data name="LegalHoldSet" xml:space="preserve">
+    <value>Legal Hold gesetzt.</value>
+  </data>
+  <data name="MailAccounts" xml:space="preserve">
+    <value>Postfächer</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="NameRequired" xml:space="preserve">
+    <value>Ein Name ist erforderlich.</value>
+  </data>
+  <data name="NeverVerified" xml:space="preserve">
+    <value>Noch nicht geprüft</value>
+  </data>
+  <data name="NewOrganization" xml:space="preserve">
+    <value>Neue Organisation</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>nein</value>
+  </data>
+  <data name="NoAdmins" xml:space="preserve">
+    <value>Noch keine Admins.</value>
+  </data>
+  <data name="NoAnchors" xml:space="preserve">
+    <value>Noch keine Anker; sie werden täglich erzeugt.</value>
+  </data>
+  <data name="NoOrganization" xml:space="preserve">
+    <value>Ihr Benutzer gehört zu keiner Organisation.</value>
+  </data>
+  <data name="NoOriginalLegacy" xml:space="preserve">
+    <value>Diese E-Mail wurde archiviert, bevor Originale gespeichert wurden; sie ist versiegelt, eine Originaldatei gibt es nicht.</value>
+  </data>
+  <data name="NotAllowed" xml:space="preserve">
+    <value>nicht erlaubt</value>
+  </data>
+  <data name="NotSealedYet" xml:space="preserve">
+    <value>noch nicht versiegelt</value>
+  </data>
+  <data name="Notes" xml:space="preserve">
+    <value>Notizen</value>
+  </data>
+  <data name="Organization" xml:space="preserve">
+    <value>Organisation</value>
+  </data>
+  <data name="OrganizationAdmins" xml:space="preserve">
+    <value>Admins der Organisation</value>
+  </data>
+  <data name="OrganizationCreated" xml:space="preserve">
+    <value>Organisation {0} angelegt.</value>
+  </data>
+  <data name="OrganizationSaved" xml:space="preserve">
+    <value>Organisation gespeichert.</value>
+  </data>
+  <data name="OrganizationSettingsOwnedByCustomer" xml:space="preserve">
+    <value>Aufbewahrung, Legal Hold und Support-Zugriff legen die Admins der Organisation selbst fest.</value>
+  </data>
+  <data name="Organizations" xml:space="preserve">
+    <value>Organisationen</value>
+  </data>
+  <data name="OrganizationsIntro" xml:space="preserve">
+    <value>Jede Organisation ist ein eigenes Archiv: ihre Benutzer sehen nie Daten einer anderen Organisation. Provider-Admins sehen hier Namen und Zahlen, aber keine Inhalte.</value>
+  </data>
+  <data name="OriginalHashMismatch" xml:space="preserve">
+    <value>Das gespeicherte Original stimmt nicht mit seinem SHA-256 überein. Bitte eine Integritätsprüfung starten.</value>
+  </data>
+  <data name="OriginalPurged" xml:space="preserve">
+    <value>Das Original wurde nach Ablauf der Aufbewahrungsfrist gelöscht.</value>
+  </data>
+  <data name="Originals" xml:space="preserve">
+    <value>Originale</value>
+  </data>
+  <data name="OriginalsChain" xml:space="preserve">
+    <value>Kette der Originale</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Passwort</value>
+  </data>
+  <data name="Problem" xml:space="preserve">
+    <value>Problem</value>
+  </data>
+  <data name="ProblemsFound" xml:space="preserve">
+    <value>Gefundene Probleme</value>
+  </data>
+  <data name="ProtectedEmailsKept" xml:space="preserve">
+    <value>{0} E-Mails befinden sich in der Aufbewahrungsfrist oder unter Legal Hold und wurden beibehalten.</value>
+  </data>
+  <data name="PurgeExpiredConfirm" xml:space="preserve">
+    <value>{0} E-Mails mit abgelaufener Aufbewahrungsfrist löschen? Das kann nicht rückgängig gemacht werden.</value>
+  </data>
+  <data name="PurgeExpiredNow" xml:space="preserve">
+    <value>{0} abgelaufene E-Mails jetzt löschen</value>
+  </data>
+  <data name="Purged" xml:space="preserve">
+    <value>Gelöscht</value>
+  </data>
+  <data name="PurgedExpired" xml:space="preserve">
+    <value>{0} E-Mails mit abgelaufener Frist wurden gelöscht.</value>
+  </data>
+  <data name="Reason" xml:space="preserve">
+    <value>Grund</value>
+  </data>
+  <data name="ReleaseLegalHold" xml:space="preserve">
+    <value>Legal Hold aufheben</value>
+  </data>
+  <data name="RetainUntil" xml:space="preserve">
+    <value>Aufbewahren bis</value>
+  </data>
+  <data name="Retention" xml:space="preserve">
+    <value>Aufbewahrung</value>
+  </data>
+  <data name="RetentionCannotBeShortened" xml:space="preserve">
+    <value>Eine Aufbewahrungsfrist kann verlängert, aber nicht verkürzt werden.</value>
+  </data>
+  <data name="RetentionExpired" xml:space="preserve">
+    <value>abgelaufen</value>
+  </data>
+  <data name="RetentionPending" xml:space="preserve">
+    <value>wird berechnet</value>
+  </data>
+  <data name="RetentionSettings" xml:space="preserve">
+    <value>Aufbewahrung und Legal Hold</value>
+  </data>
+  <data name="RetentionYears" xml:space="preserve">
+    <value>Aufbewahrung in Jahren</value>
+  </data>
+  <data name="RetentionYearsHelp" xml:space="preserve">
+    <value>Gezählt ab Ende des Kalenderjahres der E-Mail (§ 147 AO). Handels- und Geschäftsbriefe: 6 Jahre, Buchungsbelege: 8 Jahre, Bücher und Aufzeichnungen: 10 Jahre. 0 = keine Aufbewahrungspflicht. Gilt für ab jetzt archivierte E-Mails; gespeicherte Fristen werden nie verkürzt.</value>
+  </data>
+  <data name="RetentionYearsRange" xml:space="preserve">
+    <value>Die Aufbewahrung muss zwischen 0 und 100 Jahren liegen.</value>
+  </data>
+  <data name="RetentionYearsShortHelp" xml:space="preserve">
+    <value>Ab Ende des Kalenderjahres (§ 147 AO); 0 = keine.</value>
+  </data>
+  <data name="RunVerification" xml:space="preserve">
+    <value>Integrität jetzt prüfen</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Speichern</value>
+  </data>
+  <data name="SetLegalHold" xml:space="preserve">
+    <value>Legal Hold setzen</value>
+  </data>
+  <data name="SettingsSaved" xml:space="preserve">
+    <value>Einstellungen gespeichert.</value>
+  </data>
+  <data name="Sha256Original" xml:space="preserve">
+    <value>SHA-256 des Originals</value>
+  </data>
+  <data name="Sha256Seal" xml:space="preserve">
+    <value>SHA-256-Siegel der gespeicherten Felder</value>
+  </data>
+  <data name="Slug" xml:space="preserve">
+    <value>Kurzname</value>
+  </data>
+  <data name="SlugHelp" xml:space="preserve">
+    <value>Kleinbuchstaben, Ziffern und Bindestriche; wird in Speicherpfaden verwendet und kann später nicht geändert werden.</value>
+  </data>
+  <data name="SlugTaken" xml:space="preserve">
+    <value>Dieser Kurzname ist bereits vergeben.</value>
+  </data>
+  <data name="Source_graph" xml:space="preserve">
+    <value>Original aus Microsoft 365</value>
+  </data>
+  <data name="Source_imap" xml:space="preserve">
+    <value>Original per IMAP</value>
+  </data>
+  <data name="Source_import-eml" xml:space="preserve">
+    <value>Original aus EML-Import</value>
+  </data>
+  <data name="Source_import-mbox" xml:space="preserve">
+    <value>Original aus MBox-Import</value>
+  </data>
+  <data name="Source_legacy-seal" xml:space="preserve">
+    <value>versiegelter Altbestand (keine Originaldatei)</value>
+  </data>
+  <data name="Source_serialized" xml:space="preserve">
+    <value>neu serialisiert (Rohdaten waren nicht verfügbar)</value>
+  </data>
+  <data name="Started" xml:space="preserve">
+    <value>Gestartet</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Status_Error" xml:space="preserve">
+    <value>Fehler</value>
+  </data>
+  <data name="Status_Failed" xml:space="preserve">
+    <value>Probleme gefunden</value>
+  </data>
+  <data name="Status_Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Status_Running" xml:space="preserve">
+    <value>Läuft</value>
+  </data>
+  <data name="Storage" xml:space="preserve">
+    <value>Speicher</value>
+  </data>
+  <data name="SupportAccess" xml:space="preserve">
+    <value>Support-Zugriff</value>
+  </data>
+  <data name="SupportAccessActive" xml:space="preserve">
+    <value>Support-Zugriff auf {0} ist aktiv. Alle Aktionen werden im Audit-Log dieser Organisation protokolliert.</value>
+  </data>
+  <data name="SupportAccessExplanation" xml:space="preserve">
+    <value>Sie sehen das Archiv dieser Organisation mit Ihren eigenen Rechten. Zugriff, Begründung und alle Aktionen werden im Audit-Log der Organisation protokolliert.</value>
+  </data>
+  <data name="SupportAccessNotAllowed" xml:space="preserve">
+    <value>Diese Organisation hat keinen Support-Zugriff erlaubt.</value>
+  </data>
+  <data name="SupportAccessTo" xml:space="preserve">
+    <value>Support-Zugriff auf {0}</value>
+  </data>
+  <data name="SupportNotAllowedHint" xml:space="preserve">
+    <value>Die Organisation hat keinen Support-Zugriff erlaubt.</value>
+  </data>
+  <data name="SupportReasonRequired" xml:space="preserve">
+    <value>Bitte eine Begründung für den Support-Zugriff angeben.</value>
+  </data>
+  <data name="UnassignedUsers" xml:space="preserve">
+    <value>Benutzer ohne Organisation</value>
+  </data>
+  <data name="UnassignedUsersHelp" xml:space="preserve">
+    <value>Neue OIDC-Benutzer, deren Mail-Domain keiner Organisation gehört, warten hier und sehen nichts, bis sie zugeordnet sind.</value>
+  </data>
+  <data name="UserAssigned" xml:space="preserve">
+    <value>Benutzer {0} zugeordnet.</value>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>Benutzername</value>
+  </data>
+  <data name="UsernameTaken" xml:space="preserve">
+    <value>Dieser Benutzername oder diese E-Mail-Adresse ist bereits vergeben.</value>
+  </data>
+  <data name="Users" xml:space="preserve">
+    <value>Benutzer</value>
+  </data>
+  <data name="Verification" xml:space="preserve">
+    <value>Integritätsprüfung</value>
+  </data>
+  <data name="VerificationQueueFull" xml:space="preserve">
+    <value>Zu viele Prüfungen warten; bitte später erneut versuchen.</value>
+  </data>
+  <data name="VerificationQueued" xml:space="preserve">
+    <value>Die Integritätsprüfung wurde gestartet; das Ergebnis erscheint unten, sobald sie fertig ist.</value>
+  </data>
+  <data name="Verifications" xml:space="preserve">
+    <value>Integritätsprüfungen</value>
+  </data>
+  <data name="WithOriginal" xml:space="preserve">
+    <value>mit Original</value>
+  </data>
+  <data name="WormDisabled" xml:space="preserve">
+    <value>Nicht konfiguriert: Originale liegen nur in der Datenbank. Für einen Nachweis, der auch gegenüber Administratoren hält, S3 Object Lock einrichten (siehe Dokumentation).</value>
+  </data>
+  <data name="WormHint" xml:space="preserve">
+    <value>Das Original liegt unveränderbar (S3 Object Lock) bis zum Ende der Aufbewahrungsfrist.</value>
+  </data>
+  <data name="WormStorage" xml:space="preserve">
+    <value>WORM-Speicher</value>
+  </data>
+  <data name="YearsValue" xml:space="preserve">
+    <value>{0} Jahre</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>ja</value>
+  </data>
+</root>

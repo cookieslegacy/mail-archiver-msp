@@ -1109,6 +1109,17 @@ namespace MailArchiver.Controllers
                 return NotFound();
             }
 
+            // An account with emails still under retention or legal hold cannot be deleted (the
+            // database refuses it). It can be disabled instead; it is deleted once nothing is kept.
+            var protectedCount = await MailArchiver.Services.Compliance.RetentionGuard.CountProtectedInAccountAsync(_context, id);
+            if (protectedCount > 0)
+            {
+                var complianceLocalizer = HttpContext.RequestServices
+                    .GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<ComplianceResource>>();
+                TempData["ErrorMessage"] = complianceLocalizer["AccountHasProtectedEmails", account.Name, protectedCount].Value;
+                return RedirectToAction(nameof(Index));
+            }
+
             // Determine number of emails to delete
             var emailCount = await _context.ArchivedEmails.CountAsync(e => e.MailAccountId == id);
 

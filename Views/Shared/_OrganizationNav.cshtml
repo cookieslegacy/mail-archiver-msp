@@ -1,0 +1,22 @@
+@using MailArchiver.Services.Organizations
+@inject MailArchiver.Services.IAuthenticationService OrgNavAuth
+@{
+    var controller = ViewContext.RouteData.Values["Controller"]?.ToString();
+    var isAdminOrAuditor = OrgNavAuth.IsCurrentUserAdmin(Context) || Context.User.IsInRole(OrganizationClaims.AuditorRole);
+}
+@if (isAdminOrAuditor)
+{
+    <li class="nav-item">
+        <a class="nav-link @(controller == "Compliance" ? "active" : "")" asp-controller="Compliance" asp-action="Index">
+            <i class="bi bi-shield-check me-1"></i>@CL["Compliance"]
+        </a>
+    </li>
+}
+@if (Context.User.IsInRole(OrganizationClaims.ProviderAdminRole))
+{
+    <li class="nav-item">
+        <a class="nav-link @(controller == "Organizations" ? "active" : "")" asp-controller="Organizations" asp-action="Index">
+            <i class="bi bi-buildings me-1"></i>@CL["Organizations"]
+        </a>
+    </li>
+}
