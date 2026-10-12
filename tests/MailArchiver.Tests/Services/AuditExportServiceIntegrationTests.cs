@@ -200,10 +200,7 @@ public class AuditExportServiceIntegrationTests
             {
                 cleanupContext.AuditExportJobs.Remove(row);
             }
-            var logRows = cleanupContext.AccessLogs
-                .Where(l => l.Type == AccessLogType.AuditExport && l.Username == "testadmin")
-                .ToList();
-            cleanupContext.AccessLogs.RemoveRange(logRows);
+            // The audit log is append-only (MigrateFork_4); its entries stay.
             var emails = cleanupContext.ArchivedEmails.Where(e => e.MailAccountId == account.Id).ToList();
             cleanupContext.ArchivedEmails.RemoveRange(emails);
             var accountRow = cleanupContext.MailAccounts.FirstOrDefault(a => a.Id == account.Id);

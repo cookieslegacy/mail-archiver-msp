@@ -6,6 +6,8 @@ namespace MailArchiver.Models
     {
         public int Id { get; set; }
         public int ArchivedEmailId { get; set; }
+        // Organization (tenant). Set by the database from the email on insert.
+        public int OrganizationId { get; set; }
         public string FileName { get; set; }
         public string ContentType { get; set; }
         public string? ContentId { get; set; }

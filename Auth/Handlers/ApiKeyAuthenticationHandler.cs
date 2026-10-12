@@ -51,6 +51,12 @@ namespace MailArchiver.Auth.Handlers
                 return AuthenticateResult.Fail("Invalid or inactive API key.");
             }
 
+            var dbContext = Context.RequestServices.GetRequiredService<MailArchiver.Data.MailArchiverDbContext>();
+            if (!await MailArchiver.Services.Organizations.OrganizationService.CanSignInAsync(dbContext, user))
+            {
+                return AuthenticateResult.Fail("Organization is deactivated.");
+            }
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.Username),
@@ -66,6 +72,9 @@ namespace MailArchiver.Auth.Handlers
             {
                 claims.Add(new Claim(ClaimTypes.Role, "SelfManager"));
             }
+
+            // Organization (tenant) and the provider admin / auditor roles
+            claims.AddRange(MailArchiver.Services.Organizations.OrganizationClaims.For(user));
 
             var identity = new ClaimsIdentity(claims, SchemeName);
             var principal = new ClaimsPrincipal(identity);

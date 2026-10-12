@@ -156,12 +156,20 @@ namespace MailArchiver.Services
             _logger.LogInformation("Creating new OIDC user: Email={Email}, DisplayName={DisplayName}, RemoteId={RemoteId}, IsAdmin={IsAdmin}", 
                 email, displayName, userId, isAdminEmail);
             
+            // The organization is taken from the mail domain. Users of an unknown domain are
+            // created without one and see nothing until a provider admin assigns them.
+            var organizationId = await MailArchiver.Services.Organizations.OrganizationService.FindOrganizationForEmailAsync(_context, email);
+            if (organizationId == null && isAdminEmail)
+                organizationId = Organization.DefaultOrganizationId;
+
             user = new User()
             {
                 Username = candidate,
                 Email = email,
                 PasswordHash = null, // OIDC users don't have passwords
                 IsAdmin = isAdminEmail,
+                IsProviderAdmin = isAdminEmail,
+                OrganizationId = organizationId,
                 IsActive = autoApprove, // Auto-approve admins
                 RequiresApproval = !autoApprove, // Admin emails don't require approval
                 OAuthRemoteUserId = userId,
@@ -342,6 +350,18 @@ namespace MailArchiver.Services
 
         public async Task<List<MailAccount>> GetUserMailAccountsAsync(int userId)
         {
+            // Auditors read every mail account of their organization without assignments.
+            var auditor = await _context.Users
+                .Where(u => u.Id == userId && u.IsAuditor && u.OrganizationId != null)
+                .Select(u => new { u.OrganizationId })
+                .FirstOrDefaultAsync();
+            if (auditor != null)
+            {
+                return await _context.MailAccounts
+                    .Where(a => a.OrganizationId == auditor.OrganizationId)
+                    .ToListAsync();
+            }
+
             return await _context.UserMailAccounts
                 .Where(uma => uma.UserId == userId)
                 .Include(uma => uma.MailAccount)
@@ -411,11 +431,16 @@ namespace MailArchiver.Services
         public async Task<bool> IsUserAuthorizedForAccountAsync(int userId, int mailAccountId)
         {
             // Admin users have access to all accounts
-            var isAdmin = await IsUserAdminAsync(userId);
-            if (isAdmin)
+            // Admins and auditors see the accounts of their own organization only.
+            var user = await _context.Users.FindAsync(userId);
+            if (user != null && (user.IsAdmin || user.IsAuditor))
             {
-                _logger.LogInformation("User {UserId} is admin, granting access to account {MailAccountId}", userId, mailAccountId);
-                return true;
+                var inOrganization = user.OrganizationId != null && await _context.MailAccounts
+                    .IgnoreQueryFilters()
+                    .AnyAsync(a => a.Id == mailAccountId && a.OrganizationId == user.OrganizationId);
+                _logger.LogInformation("User {UserId} is admin/auditor, access to account {MailAccountId}: {HasAccess}",
+                    userId, mailAccountId, inOrganization ? "Granted" : "Denied");
+                return inOrganization;
             }
 
             // SECURITY (P1): Self-managers, like every other non-admin user, may only use

@@ -9,6 +9,10 @@ namespace MailArchiver.Models
     {
         public int Id { get; set; }
 
+        // Organization (tenant). Payloads are deduplicated within one organization only, so
+        // one organization can never learn whether another one holds the same file.
+        public int OrganizationId { get; set; }
+
         /// <summary>SHA-256 hash of <see cref="Content"/> as lowercase hex string (64 chars).</summary>
         public string Hash { get; set; } = string.Empty;
 

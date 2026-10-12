@@ -1,4 +1,5 @@
 using MailArchiver.Models;
+using MailArchiver.Services.Organizations;
 using MailArchiver.Services.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace MailArchiver.Data
 {
-    public class MailArchiverDbContext : DbContext
+    public partial class MailArchiverDbContext : DbContext
     {
         private readonly ICredentialProtector _credentialProtector;
 
@@ -35,9 +36,16 @@ namespace MailArchiver.Data
         }
 
         public MailArchiverDbContext(DbContextOptions<MailArchiverDbContext> options, ICredentialProtector credentialProtector)
+            : this(options, credentialProtector, SystemOrganizationContext.Instance)
+        {
+        }
+
+        public MailArchiverDbContext(DbContextOptions<MailArchiverDbContext> options, ICredentialProtector credentialProtector,
+            IOrganizationContext organizationContext)
             : base(options)
         {
             _credentialProtector = credentialProtector;
+            _organizationContext = organizationContext;
         }
 
         /// <summary>
@@ -617,6 +625,8 @@ namespace MailArchiver.Data
             modelBuilder.Entity<AuditExportJob>()
                 .HasIndex(j => j.Status)
                 .HasDatabaseName("IX_AuditExportJobs_Status");
+
+            ConfigureOrganizationsAndCompliance(modelBuilder);
         }
     }
 }

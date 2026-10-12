@@ -43,6 +43,19 @@ namespace MailArchiver.Models
         public DateTime? HashCreatedAt { get; set; }
         public bool IsLocked { get; set; } = false;
 
+        // Organization (tenant). Set by the database from the mail account on insert.
+        public int OrganizationId { get; set; }
+
+        // End of the legal retention period. Set by the database on insert; until then the
+        // row cannot be deleted. Can be extended but never shortened.
+        public DateTime? RetainUntil { get; set; }
+
+        // Legal hold on this single email: never deleted while set.
+        public bool LegalHold { get; set; }
+
+        // The original message as received, with its place in the hash chain.
+        public virtual ArchivedEmailOriginal? Original { get; set; }
+
         public virtual MailAccount MailAccount { get; set; }
         public virtual ICollection<EmailAttachment> Attachments { get; set; } = new List<EmailAttachment>();
     }

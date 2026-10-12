@@ -42,6 +42,11 @@ public class TestDbFixture : IAsyncLifetime
         // Apply pending migrations once for the session so the schema is present.
         using var ctx = CreateContext();
         await ctx.Database.MigrateAsync();
+
+        // The default organization keeps no retention in the test database, so tests may
+        // delete the emails they created. Retention tests use their own organization.
+        await ctx.Database.ExecuteSqlRawAsync(
+            "UPDATE mail_archiver.\"Organizations\" SET \"RetentionYears\" = 0 WHERE \"Id\" = 1");
     }
 
     public async Task DisposeAsync()

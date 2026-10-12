@@ -11,6 +11,9 @@ namespace MailArchiver.Models
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
+        // Organization (tenant) the export belongs to.
+        public int? OrganizationId { get; set; }
+
         public string Username { get; set; } = string.Empty;
 
         public DateTime Created { get; set; } = DateTime.UtcNow;

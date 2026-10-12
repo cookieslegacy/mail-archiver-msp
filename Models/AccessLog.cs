@@ -29,6 +29,15 @@ namespace MailArchiver.Models
         
         // Optional email account for account-specific actions
         public int? MailAccountId { get; set; }
+
+        // Organization (tenant); null for provider level actions. Filled by the database
+        // from the account or user when not set.
+        public int? OrganizationId { get; set; }
+
+        // Position in the organization's audit hash chain, set by the database on insert.
+        public long ChainSeq { get; set; }
+        public string? PrevChainHash { get; set; }
+        public string? ChainHash { get; set; }
     }
     
     public enum AccessLogType
@@ -46,6 +55,12 @@ namespace MailArchiver.Models
         DeletionPolicy,
         SyncAcknowledgeFailures,
         Retention,
-        AuditExport
+        AuditExport,
+        // Organization (tenant) and compliance events
+        Organization,
+        ProviderSupportAccess,
+        LegalHold,
+        IntegrityCheck,
+        RetentionPurge
     }
 }

@@ -63,8 +63,12 @@ namespace MailArchiver.Services
         // Shared preparation: collect pending attachments + their hashes.
         // ------------------------------------------------------------------
 
-        /// <summary>An attachment plus the SHA-256 (hex) of its pending bytes.</summary>
-        private readonly record struct PendingAttachment(EmailAttachment Attachment, string Hash, byte[] Bytes);
+        /// <summary>
+        /// An attachment plus the SHA-256 (hex) of its pending bytes, and what identifies its
+        /// organization: the mail account of a new email, or the id of an existing email.
+        /// </summary>
+        private readonly record struct PendingAttachment(EmailAttachment Attachment, string Hash, byte[] Bytes,
+            int? MailAccountId, int? ArchivedEmailId);
 
         private static List<PendingAttachment> CollectPending(DbContext context)
         {
@@ -86,39 +90,46 @@ namespace MailArchiver.Services
                 if (bytes == null)
                     continue;
 
-                pending.Add(new PendingAttachment(attachment, ComputeSha256Hex(bytes), bytes));
+                // Payloads are deduplicated per organization. A new email has no id yet, so its
+                // organization is found through its mail account.
+                var email = attachment.ArchivedEmail;
+                int? accountId = email != null && email.MailAccountId != 0 ? email.MailAccountId : null;
+                int? emailId = attachment.ArchivedEmailId != 0 ? attachment.ArchivedEmailId
+                    : email != null && email.Id != 0 ? email.Id : null;
+
+                pending.Add(new PendingAttachment(attachment, ComputeSha256Hex(bytes), bytes, accountId, emailId));
             }
             return pending;
         }
 
-        /// <summary>Distinct (hash → bytes/size) payloads to be upserted.</summary>
-        private static (string[] hashes, byte[][] contents, long[] sizes) BuildBatchArrays(
+        /// <summary>One input row per pending attachment for the batch upsert.</summary>
+        private static (string[] hashes, byte[][] contents, long[] sizes, int?[] accounts, int?[] emails) BuildBatchArrays(
             List<PendingAttachment> pending)
         {
-            var distinct = new Dictionary<string, byte[]>();
-            foreach (var p in pending)
-                distinct[p.Hash] = p.Bytes;
-
-            var hashes = new string[distinct.Count];
-            var contents = new byte[distinct.Count][];
-            var sizes = new long[distinct.Count];
-            var i = 0;
-            foreach (var kv in distinct)
+            var hashes = new string[pending.Count];
+            var contents = new byte[pending.Count][];
+            var sizes = new long[pending.Count];
+            var accounts = new int?[pending.Count];
+            var emails = new int?[pending.Count];
+            for (var i = 0; i < pending.Count; i++)
             {
-                hashes[i] = kv.Key;
-                contents[i] = kv.Value;
-                sizes[i] = kv.Value.LongLength;
-                i++;
+                hashes[i] = pending[i].Hash;
+                contents[i] = pending[i].Bytes;
+                sizes[i] = pending[i].Bytes.LongLength;
+                accounts[i] = pending[i].MailAccountId;
+                emails[i] = pending[i].ArchivedEmailId;
             }
-            return (hashes, contents, sizes);
+            return (hashes, contents, sizes, accounts, emails);
         }
 
-        private static void Assign(List<PendingAttachment> pending, IReadOnlyDictionary<string, int> hashToId)
+        /// <summary>Assigns the content row ids, indexed by the 1-based input position.</summary>
+        private static void Assign(List<PendingAttachment> pending, IReadOnlyDictionary<long, int> ordinalToId)
         {
-            foreach (var p in pending)
+            for (var i = 0; i < pending.Count; i++)
             {
-                if (hashToId.TryGetValue(p.Hash, out var id))
+                if (ordinalToId.TryGetValue(i + 1, out var id))
                 {
+                    var p = pending[i];
                     p.Attachment.AttachmentContentId = id;
                     p.Attachment.AttachmentContent = null; // avoid EF inserting a duplicate content row
                     p.Attachment.LegacyContent = null;     // never store bytes inline for new rows
@@ -127,25 +138,32 @@ namespace MailArchiver.Services
             }
         }
 
-        // SQL upsert for the whole batch in a single round-trip. The `ins` CTE returns
-        // the rows newly inserted by this statement; the second SELECT returns the
-        // already-existing rows (pre-snapshot) for hashes that hit ON CONFLICT DO NOTHING.
-        // The UNION of both covers every hash exactly once.
+        // SQL upsert for the whole batch in a single round-trip. Each input row resolves its
+        // organization (from the mail account of a new email, or from an existing email);
+        // payloads are unique per (organization, hash). The `ins` CTE returns the rows newly
+        // inserted by this statement, the second join finds rows that already existed
+        // (pre-snapshot) for inputs that hit ON CONFLICT DO NOTHING.
         private const string BatchUpsertSql = @"
             WITH input AS (
-                SELECT unnest(@hashes) AS h,
-                       unnest(@contents) AS c,
-                       unnest(@sizes) AS s
+                SELECT u.h, u.c, u.s, u.ord,
+                       COALESCE(
+                           (SELECT a.""OrganizationId"" FROM mail_archiver.""MailAccounts"" a WHERE a.""Id"" = u.acct),
+                           (SELECT e.""OrganizationId"" FROM mail_archiver.""ArchivedEmails"" e WHERE e.""Id"" = u.email)
+                       ) AS org
+                FROM unnest(@hashes, @contents, @sizes, @accounts, @emails)
+                     WITH ORDINALITY AS u(h, c, s, acct, email, ord)
             ),
             ins AS (
-                INSERT INTO mail_archiver.""AttachmentContents"" (""Hash"", ""Content"", ""Size"", ""CreatedAt"")
-                SELECT DISTINCT ON (h) h, c, s, now() FROM input
-                ON CONFLICT (""Hash"") DO NOTHING
-                RETURNING ""Id"", ""Hash""
+                INSERT INTO mail_archiver.""AttachmentContents"" (""OrganizationId"", ""Hash"", ""Content"", ""Size"", ""CreatedAt"")
+                SELECT DISTINCT ON (org, h) org, h, c, s, now() FROM input WHERE org IS NOT NULL
+                ON CONFLICT (""OrganizationId"", ""Hash"") DO NOTHING
+                RETURNING ""Id"", ""Hash"", ""OrganizationId""
             )
-            SELECT ""Id"", ""Hash"" FROM ins
-            UNION
-            SELECT ""Id"", ""Hash"" FROM mail_archiver.""AttachmentContents"" WHERE ""Hash"" = ANY(@hashes);";
+            SELECT i.ord, COALESCE(ins.""Id"", ac.""Id"")
+            FROM input i
+            LEFT JOIN ins ON ins.""OrganizationId"" = i.org AND ins.""Hash"" = i.h
+            LEFT JOIN mail_archiver.""AttachmentContents"" ac ON ac.""OrganizationId"" = i.org AND ac.""Hash"" = i.h
+            WHERE COALESCE(ins.""Id"", ac.""Id"") IS NOT NULL;";
 
         // ------------------------------------------------------------------
         // Async path
@@ -156,7 +174,7 @@ namespace MailArchiver.Services
             if (pending.Count == 0)
                 return;
 
-            var (hashes, contents, sizes) = BuildBatchArrays(pending);
+            var (hashes, contents, sizes, accounts, emails) = BuildBatchArrays(pending);
 
             var connection = context.Database.GetDbConnection();
             var transaction = context.Database.CurrentTransaction?.GetDbTransaction();
@@ -175,20 +193,20 @@ namespace MailArchiver.Services
 
             try
             {
-                var hashToId = new Dictionary<string, int>(hashes.Length);
+                var ordinalToId = new Dictionary<long, int>(hashes.Length);
                 using var command = connection.CreateCommand();
                 if (transaction != null)
                     command.Transaction = transaction;
                 command.CommandText = BatchUpsertSql;
-                AddArrayParameters(command, hashes, contents, sizes);
+                AddArrayParameters(command, hashes, contents, sizes, accounts, emails);
 
                 await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
                 {
                     while (await reader.ReadAsync(cancellationToken))
-                        hashToId[reader.GetString(1)] = reader.GetInt32(0);
+                        ordinalToId[reader.GetInt64(0)] = reader.GetInt32(1);
                 }
 
-                Assign(pending, hashToId);
+                Assign(pending, ordinalToId);
             }
             finally
             {
@@ -206,7 +224,7 @@ namespace MailArchiver.Services
             if (pending.Count == 0)
                 return;
 
-            var (hashes, contents, sizes) = BuildBatchArrays(pending);
+            var (hashes, contents, sizes, accounts, emails) = BuildBatchArrays(pending);
 
             var connection = context.Database.GetDbConnection();
             var transaction = context.Database.CurrentTransaction?.GetDbTransaction();
@@ -220,20 +238,20 @@ namespace MailArchiver.Services
 
             try
             {
-                var hashToId = new Dictionary<string, int>(hashes.Length);
+                var ordinalToId = new Dictionary<long, int>(hashes.Length);
                 using var command = connection.CreateCommand();
                 if (transaction != null)
                     command.Transaction = transaction;
                 command.CommandText = BatchUpsertSql;
-                AddArrayParameters(command, hashes, contents, sizes);
+                AddArrayParameters(command, hashes, contents, sizes, accounts, emails);
 
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
-                        hashToId[reader.GetString(1)] = reader.GetInt32(0);
+                        ordinalToId[reader.GetInt64(0)] = reader.GetInt32(1);
                 }
 
-                Assign(pending, hashToId);
+                Assign(pending, ordinalToId);
             }
             finally
             {
@@ -248,11 +266,14 @@ namespace MailArchiver.Services
             return Convert.ToHexString(hash).ToLowerInvariant();
         }
 
-        private static void AddArrayParameters(DbCommand command, string[] hashes, byte[][] contents, long[] sizes)
+        private static void AddArrayParameters(DbCommand command, string[] hashes, byte[][] contents, long[] sizes,
+            int?[] accounts, int?[] emails)
         {
             AddParameter(command, "@hashes", hashes);
             AddParameter(command, "@contents", contents);
             AddParameter(command, "@sizes", sizes);
+            AddParameter(command, "@accounts", accounts);
+            AddParameter(command, "@emails", emails);
         }
 
         private static void AddParameter(DbCommand command, string name, object value)

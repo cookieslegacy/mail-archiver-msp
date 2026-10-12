@@ -52,6 +52,13 @@ namespace MailArchiver.Auth.Services
                 return;
             }
 
+            // Users of a deactivated organization cannot sign in (provider admins can).
+            if (!await MailArchiver.Services.Organizations.OrganizationService.CanSignInAsync(_dbContext, user))
+            {
+                _logger.LogWarning("Sign in of user '{Username}' refused: organization is deactivated", user.Username);
+                return;
+            }
+
             // Create claims for the user
             var claims = new List<Claim>
             {
@@ -70,6 +77,9 @@ namespace MailArchiver.Auth.Services
             {
                 claims.Add(new Claim(ClaimTypes.Role, "SelfManager"));
             }
+
+            // Organization (tenant) and the provider admin / auditor roles
+            claims.AddRange(MailArchiver.Services.Organizations.OrganizationClaims.For(user));
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);

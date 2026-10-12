@@ -1,0 +1,155 @@
+using System.Security.Claims;
+using MailArchiver.Models;
+
+namespace MailArchiver.Services.Organizations
+{
+    /// <summary>
+    /// Tells the data layer which organization (tenant) the current unit of work acts for.
+    /// The DbContext turns this into global query filters and into the PostgreSQL row level
+    /// security setting, so every query is confined to one organization.
+    /// </summary>
+    public interface IOrganizationContext
+    {
+        /// <summary>
+        /// Background work without a signed in user (sync, maintenance, jobs, tests). Sees all
+        /// organizations; such code works on records it got by id and inherits their organization.
+        /// </summary>
+        bool IsSystem { get; }
+
+        /// <summary>A request that is not (yet) authenticated, e.g. the login page.</summary>
+        bool IsAnonymous { get; }
+
+        /// <summary>The signed in user manages organizations (provider staff).</summary>
+        bool IsProviderAdmin { get; }
+
+        /// <summary>
+        /// The organization whose data the current user may see, or null when there is none
+        /// (then all organization data is hidden).
+        /// </summary>
+        int? OrganizationId { get; }
+
+        /// <summary>True while a provider admin works inside another organization for support.</summary>
+        bool IsProviderSupportAccess { get; }
+    }
+
+    /// <summary>Claim and session keys shared by sign-in and the organization context.</summary>
+    public static class OrganizationClaims
+    {
+        public const string OrganizationId = "OrganizationId";
+        public const string ProviderAdminRole = "ProviderAdmin";
+        public const string AuditorRole = "Auditor";
+
+        /// <summary>Session key holding the organization a provider admin switched into.</summary>
+        public const string SupportOrganizationSessionKey = "SupportOrganizationId";
+
+        public static IEnumerable<Claim> For(User user)
+        {
+            if (user.OrganizationId.HasValue)
+                yield return new Claim(OrganizationId, user.OrganizationId.Value.ToString());
+            if (user.IsProviderAdmin)
+                yield return new Claim(ClaimTypes.Role, ProviderAdminRole);
+            if (user.IsAuditor)
+                yield return new Claim(ClaimTypes.Role, AuditorRole);
+        }
+    }
+
+    /// <summary>
+    /// Resolves the organization from the current HTTP request. Evaluated on every access
+    /// (not cached) because the DbContext of a request may be created before authentication
+    /// has run, e.g. for API key requests.
+    /// </summary>
+    public class HttpOrganizationContext : IOrganizationContext
+    {
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public HttpOrganizationContext(IHttpContextAccessor httpContextAccessor)
+        {
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        private HttpContext? Http => _httpContextAccessor.HttpContext;
+
+        private ClaimsPrincipal? AuthenticatedUser
+        {
+            get
+            {
+                var user = Http?.User;
+                return user?.Identity?.IsAuthenticated == true ? user : null;
+            }
+        }
+
+        public bool IsSystem => Http == null;
+
+        public bool IsAnonymous => Http != null && AuthenticatedUser == null;
+
+        public bool IsProviderAdmin => AuthenticatedUser?.IsInRole(OrganizationClaims.ProviderAdminRole) == true;
+
+        public bool IsProviderSupportAccess => SupportOrganizationId.HasValue;
+
+        public int? OrganizationId
+        {
+            get
+            {
+                var user = AuthenticatedUser;
+                if (user == null)
+                    return null;
+
+                var support = SupportOrganizationId;
+                if (support.HasValue)
+                    return support;
+
+                var claim = user.FindFirst(OrganizationClaims.OrganizationId)?.Value;
+                return int.TryParse(claim, out var id) ? id : null;
+            }
+        }
+
+        private int? SupportOrganizationId
+        {
+            get
+            {
+                if (!IsProviderAdmin)
+                    return null;
+                try
+                {
+                    // Session is only available for cookie requests; API requests have none.
+                    var http = Http;
+                    if (http?.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>() == null)
+                        return null;
+                    return http.Session.GetInt32(OrganizationClaims.SupportOrganizationSessionKey);
+                }
+                catch (InvalidOperationException)
+                {
+                    return null;
+                }
+            }
+        }
+    }
+
+    /// <summary>Organization context for code that runs outside any request.</summary>
+    public sealed class SystemOrganizationContext : IOrganizationContext
+    {
+        public static readonly SystemOrganizationContext Instance = new();
+
+        public bool IsSystem => true;
+        public bool IsAnonymous => false;
+        public bool IsProviderAdmin => false;
+        public int? OrganizationId => null;
+        public bool IsProviderSupportAccess => false;
+    }
+
+    /// <summary>A fixed organization, for tests and for jobs acting on behalf of one organization.</summary>
+    public sealed class FixedOrganizationContext : IOrganizationContext
+    {
+        public FixedOrganizationContext(int? organizationId, bool isProviderAdmin = false)
+        {
+            OrganizationId = organizationId;
+            IsProviderAdmin = isProviderAdmin;
+        }
+
+        public bool IsSystem => false;
+        public bool IsAnonymous => false;
+        public bool IsProviderAdmin { get; }
+        public int? OrganizationId { get; }
+        public bool IsProviderSupportAccess => false;
+    }
+}

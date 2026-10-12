@@ -128,10 +128,7 @@ public class AuditExportServiceLifecycleTests
             }
             cleanupContext.AuditExportJobs.Remove(row);
         }
-        var logRows = cleanupContext.AccessLogs
-            .Where(l => l.Type == AccessLogType.AuditExport && l.Username == "lifecycle-admin")
-            .ToList();
-        cleanupContext.AccessLogs.RemoveRange(logRows);
+        // The audit log is append-only (MigrateFork_4); its entries stay.
         await cleanupContext.SaveChangesAsync();
     }
 

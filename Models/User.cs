@@ -39,6 +39,17 @@ namespace MailArchiver.Models
 
         // Version update tracking
         public string? LastSeenChangelogVersion { get; set; }
+
+        // Organization (tenant). Null only for provider admins without an own organization
+        // and for users still waiting to be assigned to one.
+        public int? OrganizationId { get; set; }
+        public virtual Organization? Organization { get; set; }
+
+        // Manages organizations and their admins (service provider staff).
+        public bool IsProviderAdmin { get; set; } = false;
+
+        // Read-only access to every mail account of the user's organization (e.g. tax auditor).
+        public bool IsAuditor { get; set; } = false;
         
         // Navigation properties
         public virtual ICollection<UserMailAccount> UserMailAccounts { get; set; } = new List<UserMailAccount>();

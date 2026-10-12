@@ -375,7 +375,7 @@ namespace MailArchiver.Services
                 insCmd.CommandTimeout = commandTimeoutSeconds;
                 insCmd.CommandText = @"
                     WITH batch AS (
-                        SELECT ""Id"", ""Content""
+                        SELECT ""Id"", ""OrganizationId"", ""Content""
                         FROM mail_archiver.""EmailAttachments""
                         WHERE ""Id"" > @cursor
                           AND ""AttachmentContentId"" IS NULL
@@ -384,17 +384,18 @@ namespace MailArchiver.Services
                         LIMIT @batch
                     ),
                     hashed AS (
-                        SELECT encode(digest(""Content"", 'sha256'), 'hex') AS h,
+                        SELECT ""OrganizationId"" AS org,
+                               encode(digest(""Content"", 'sha256'), 'hex') AS h,
                                ""Content"" AS c,
                                octet_length(""Content"")::bigint AS sz
                         FROM batch
                     )
-                    INSERT INTO mail_archiver.""AttachmentContents"" (""Hash"", ""Content"", ""Size"", ""CreatedAt"")
-                    SELECT DISTINCT ON (h) h, c, sz, now()
+                    INSERT INTO mail_archiver.""AttachmentContents"" (""OrganizationId"", ""Hash"", ""Content"", ""Size"", ""CreatedAt"")
+                    SELECT DISTINCT ON (org, h) org, h, c, sz, now()
                     FROM hashed
 
-                    ORDER BY h
-                    ON CONFLICT (""Hash"") DO NOTHING;";
+                    ORDER BY org, h
+                    ON CONFLICT (""OrganizationId"", ""Hash"") DO NOTHING;";
                 insCmd.Parameters.AddWithValue("@cursor", cursor);
                 insCmd.Parameters.AddWithValue("@batch", batchSize);
                 await insCmd.ExecuteNonQueryAsync(token);
@@ -408,7 +409,7 @@ namespace MailArchiver.Services
                 updCmd.CommandTimeout = commandTimeoutSeconds;
                 updCmd.CommandText = @"
                     WITH batch AS (
-                        SELECT ""Id"", ""Content""
+                        SELECT ""Id"", ""OrganizationId"", ""Content""
                         FROM mail_archiver.""EmailAttachments""
                         WHERE ""Id"" > @cursor
                           AND ""AttachmentContentId"" IS NULL
@@ -417,7 +418,7 @@ namespace MailArchiver.Services
                         LIMIT @batch
                     ),
                     hashed AS (
-                        SELECT ""Id"",
+                        SELECT ""Id"", ""OrganizationId"" AS org,
                                encode(digest(""Content"", 'sha256'), 'hex') AS h
                         FROM batch
                     ),
@@ -426,7 +427,7 @@ namespace MailArchiver.Services
                         SET ""AttachmentContentId"" = ac.""Id"",
                             ""Content"" = NULL
                         FROM hashed hsh
-                        JOIN mail_archiver.""AttachmentContents"" ac ON ac.""Hash"" = hsh.h
+                        JOIN mail_archiver.""AttachmentContents"" ac ON ac.""OrganizationId"" = hsh.org AND ac.""Hash"" = hsh.h
                         WHERE e.""Id"" = hsh.""Id""
                         RETURNING e.""Id""
                     )

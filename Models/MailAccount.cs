@@ -56,6 +56,16 @@ public class MailAccount
         }
     }
     
+    // Organization (tenant) the account and all of its emails belong to.
+    public int OrganizationId { get; set; }
+    public virtual Organization? Organization { get; set; }
+
+    // Retention in years for this account; null = the organization's default.
+    public int? RetentionYears { get; set; }
+
+    // Legal hold for every email of this account.
+    public bool LegalHold { get; set; }
+
     public virtual ICollection<ArchivedEmail> ArchivedEmails { get; set; } = new List<ArchivedEmail>();
     
     // Navigation properties for multi-user functionality

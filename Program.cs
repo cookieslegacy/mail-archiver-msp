@@ -387,6 +387,9 @@ builder.Services.AddRateLimiter(options =>
 // Add Authentication
 builder.AddAuth();
 
+// Organizations (tenants), originals with hash chain, retention, WORM storage
+builder.AddOrganizationsAndCompliance();
+
 // Set global encoding to UTF-8
 System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
@@ -408,7 +411,8 @@ builder.Services.AddDbContext<MailArchiverDbContext>((serviceProvider, options) 
     )
     .ConfigureWarnings(warnings => warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning))
     .ReplaceService<Microsoft.EntityFrameworkCore.Infrastructure.IModelCacheKeyFactory, MailArchiver.Data.CredentialModelCacheKeyFactory>()
-    .AddInterceptors(serviceProvider.GetRequiredService<MailArchiver.Services.AttachmentDeduplicationInterceptor>());
+    .AddInterceptors(serviceProvider.GetRequiredService<MailArchiver.Services.AttachmentDeduplicationInterceptor>())
+    .AddInterceptors(serviceProvider.GetRequiredService<MailArchiver.Data.OrganizationConnectionInterceptor>());
     
     // Enable sensitive data logging for debugging (remove in production)
     if (builder.Environment.IsDevelopment())
@@ -989,6 +993,9 @@ using (var scope = app.Services.CreateScope())
                     adminEmail,
                     authOptions.Password,
                     true);
+                // The bootstrap admin manages organizations and administers the default one.
+                adminUser.IsProviderAdmin = true;
+                await userService.UpdateUserAsync(adminUser);
                 var userLogger = services.GetRequiredService<ILogger<Program>>();
                 userLogger.LogInformation("Admin user created: {Username} with email {Email}", authOptions.Username, adminEmail);
             }
