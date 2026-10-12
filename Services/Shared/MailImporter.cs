@@ -23,7 +23,10 @@ namespace MailArchiver.Services.Shared
             _attachmentCollector = attachmentCollector;
         }
 
-        public async Task<ImportResult> ImportEmailToDatabase(MimeMessage message, MailAccount account, string jobId, string targetFolder)
+        /// <param name="rawMessage">The message exactly as it was in the imported file, kept as the original.</param>
+        /// <param name="originalSource">One of <see cref="OriginalSources"/>; defaults to an EML import.</param>
+        public async Task<ImportResult> ImportEmailToDatabase(MimeMessage message, MailAccount account, string jobId, string targetFolder,
+            byte[]? rawMessage = null, string? originalSource = null)
         {
             try
             {
@@ -213,6 +216,12 @@ namespace MailArchiver.Services.Shared
                     });
                     archivedEmail.HasAttachments = true;
                 }
+
+                // The original as imported, linked into the organization's hash chain on save.
+                var originalArchive = scope.ServiceProvider.GetService<MailArchiver.Services.Compliance.IOriginalArchiveService>()
+                    ?? MailArchiver.Services.Compliance.OriginalArchiveService.DatabaseOnly;
+                await originalArchive.AttachAsync(context, archivedEmail, account, rawMessage, message,
+                    originalSource ?? OriginalSources.ImportEml);
 
                 context.ArchivedEmails.Add(archivedEmail);
                 await context.SaveChangesAsync();

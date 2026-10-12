@@ -19,12 +19,15 @@ namespace MailArchiver.Services.Providers.Graph
         private readonly MailArchiverDbContext _context;
         private readonly ILogger<GraphMailArchiver> _logger;
         private readonly DateTimeHelper _dateTimeHelper;
+        private readonly MailArchiver.Services.Compliance.IOriginalArchiveService _originalArchive;
 
         public GraphMailArchiver(
             MailArchiverDbContext context,
             ILogger<GraphMailArchiver> logger,
-            DateTimeHelper dateTimeHelper)
+            DateTimeHelper dateTimeHelper,
+            MailArchiver.Services.Compliance.IOriginalArchiveService? originalArchive = null)
         {
+            _originalArchive = originalArchive ?? MailArchiver.Services.Compliance.OriginalArchiveService.DatabaseOnly;
             _context = context;
             _logger = logger;
             _dateTimeHelper = dateTimeHelper;
@@ -68,6 +71,18 @@ namespace MailArchiver.Services.Providers.Graph
 
                 var archivedEmail = await BuildArchivedEmailAsync(graphClient, account, message, messageId, isOutgoing, folderName);
 
+                // The original MIME content as Exchange delivers it ($value), linked into the
+                // organization's hash chain on save.
+                var rawMime = await LoadMimeContentAsync(graphClient, account.EmailAddress, message.Id);
+                if (rawMime == null)
+                {
+                    // Without its original the email is not archived; the next sync retries it.
+                    throw new MailArchiver.Services.Compliance.ArchiveStorageException(
+                        $"MIME content of Graph message {message.Id} could not be loaded", new InvalidOperationException());
+                }
+                await _originalArchive.AttachAsync(_context, archivedEmail, account, rawMime, null,
+                    MailArchiver.Models.OriginalSources.Graph);
+
                 _context.ArchivedEmails.Add(archivedEmail);
                 await _context.SaveChangesAsync();
 
@@ -82,7 +97,7 @@ namespace MailArchiver.Services.Providers.Graph
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not MailArchiver.Services.Compliance.ArchiveStorageException)
             {
                 _logger.LogError(ex, "Error archiving Graph API email: Subject={Subject}, From={From}, Error={Message}",
                     message.Subject, message.From?.EmailAddress?.Address, ex.Message);
@@ -473,6 +488,25 @@ namespace MailArchiver.Services.Providers.Graph
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to extract raw headers from Graph email: {Message}", ex.Message);
+                return null;
+            }
+        }
+
+        /// <summary>Loads the MIME content of a message (GET /users/{id}/messages/{id}/$value).</summary>
+        private async Task<byte[]?> LoadMimeContentAsync(GraphServiceClient graphClient, string userPrincipalName, string messageId)
+        {
+            try
+            {
+                await using var stream = await graphClient.Users[userPrincipalName].Messages[messageId].Content.GetAsync();
+                if (stream == null)
+                    return null;
+                using var buffer = new MemoryStream();
+                await stream.CopyToAsync(buffer);
+                return buffer.Length == 0 ? null : buffer.ToArray();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Loading MIME content of Graph message {MessageId} failed", messageId);
                 return null;
             }
         }

@@ -280,6 +280,8 @@ namespace MailArchiver.Services.Providers
                     using var memoryStream = new MemoryStream();
                     await entryStream.CopyToAsync(memoryStream, ct);
                     memoryStream.Position = 0;
+                    // The file as imported is kept as the original of the email.
+                    var rawMessage = memoryStream.ToArray();
 
                     MimeMessage? message;
                     try
@@ -320,7 +322,8 @@ namespace MailArchiver.Services.Providers
                     job.CurrentEmailSubject = message.Subject;
                     job.ProcessedBytes = memoryStream.Position;
 
-                    var importResult = await mailImporter.ImportEmailToDatabase(message, targetAccount, job.JobId, targetFolder);
+                    var importResult = await mailImporter.ImportEmailToDatabase(message, targetAccount, job.JobId, targetFolder,
+                        rawMessage, MailArchiver.Models.OriginalSources.ImportEml);
                     message?.Dispose();
 
                     if (importResult.Success) job.SuccessCount++;

@@ -26,6 +26,7 @@ namespace MailArchiver.Services.Core
         private readonly BatchOperationOptions _batchOptions;
         private readonly DashboardOptions _dashboardOptions;
         private readonly IMemoryCache _memoryCache;
+        private readonly MailArchiver.Services.Compliance.IOriginalArchiveService _originalArchive;
 
         public EmailCoreService(
             MailArchiverDbContext context,
@@ -33,8 +34,10 @@ namespace MailArchiver.Services.Core
             DateTimeHelper dateTimeHelper,
             IOptions<BatchOperationOptions> batchOptions,
             IOptions<DashboardOptions>? dashboardOptions = null,
-            IMemoryCache? memoryCache = null)
+            IMemoryCache? memoryCache = null,
+            MailArchiver.Services.Compliance.IOriginalArchiveService? originalArchive = null)
         {
+            _originalArchive = originalArchive ?? MailArchiver.Services.Compliance.OriginalArchiveService.DatabaseOnly;
             _context = context;
             _logger = logger;
             _dateTimeHelper = dateTimeHelper;
@@ -1830,7 +1833,8 @@ namespace MailArchiver.Services.Core
 
         #region Archiving
 
-        public async Task<bool> ArchiveEmailAsync(MailAccount account, MimeMessage message, bool isOutgoing, string? folderName = null)
+        public async Task<bool> ArchiveEmailAsync(MailAccount account, MimeMessage message, bool isOutgoing, string? folderName = null,
+            byte[]? rawMessage = null)
         {
             // Extract date with fallback handling for malformed Date headers
             var emailDate = MailContentHelper.ExtractEmailDate(message.Date, message.Headers);
@@ -2205,6 +2209,10 @@ namespace MailArchiver.Services.Core
 
                 try
                 {
+                    // The original as received, linked into the organization's hash chain on save.
+                    await _originalArchive.AttachAsync(_context, archivedEmail, account, rawMessage, message,
+                        MailArchiver.Models.OriginalSources.Imap);
+
                     _context.ArchivedEmails.Add(archivedEmail);
                     await _context.SaveChangesAsync();
 
@@ -2217,13 +2225,15 @@ namespace MailArchiver.Services.Core
 
                     return true; // Neue E-Mail erfolgreich archiviert
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not MailArchiver.Services.Compliance.ArchiveStorageException)
                 {
                     _logger.LogError(ex, "Error saving archived email to database: {Subject}, {Message}", subject, ex.Message);
                     return false;
                 }
             }
-            catch (Exception ex)
+            // An original that cannot be stored must fail the message, so the sync retries it
+            // instead of moving on as if it had been archived.
+            catch (Exception ex) when (ex is not MailArchiver.Services.Compliance.ArchiveStorageException)
             {
                 _logger.LogError(ex, "Error archiving email: Subject={Subject}, From={From}, Error={Message}",
                     message.Subject, message.From, ex.Message);
@@ -2575,9 +2585,15 @@ namespace MailArchiver.Services.Core
 
             try
             {
-                // Find all emails older than the cutoff date for this account
+                // Find all emails older than the cutoff date for this account. Emails still
+                // inside their legal retention period or on legal hold are kept regardless
+                // (the database would refuse to delete them anyway, see MigrateFork_3).
+                var now = DateTime.UtcNow;
                 var emailsToDelete = await _context.ArchivedEmails
                     .Where(e => e.MailAccountId == account.Id && e.SentDate < cutoffDate)
+                    .Where(e => e.RetainUntil != null && e.RetainUntil <= now && !e.LegalHold
+                                && !e.MailAccount.LegalHold
+                                && !_context.Organizations.Any(o => o.Id == e.OrganizationId && o.LegalHold))
                     .Select(e => new { e.Id, e.Subject, e.From, e.SentDate })
                     .ToListAsync();
 
@@ -2595,8 +2611,9 @@ namespace MailArchiver.Services.Core
                 // Retention is exempt from the global DeletionPolicy lock.
                 try
                 {
+                    var unlockIds = emailsToDelete.Select(e => e.Id).ToArray();
                     await _context.Database.ExecuteSqlInterpolatedAsync(
-                        $"UPDATE mail_archiver.\"ArchivedEmails\" SET \"IsLocked\" = false WHERE \"MailAccountId\" = {account.Id} AND \"SentDate\" < {cutoffDate}");
+                        $"UPDATE mail_archiver.\"ArchivedEmails\" SET \"IsLocked\" = false WHERE \"Id\" = ANY({unlockIds})");
                     _logger.LogDebug("Unlocked {Count} retention-expired emails for account {AccountName} prior to deletion",
                         emailsToDelete.Count, account.Name);
                 }
@@ -2627,6 +2644,9 @@ namespace MailArchiver.Services.Core
                             .ExecuteDeleteAsync();
 
                         deletedCount += emailsDeleted;
+
+                        // The originals keep their row as proof; their bytes go.
+                        await _originalArchive.PurgeAsync(_context, batchIds, "Local retention of the mail account");
 
                         _logger.LogDebug("Deleted batch of {Count} emails ({Attachments} attachments) from local archive",
                             emailsDeleted, attachmentsDeleted);

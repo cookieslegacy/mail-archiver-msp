@@ -24,11 +24,20 @@ namespace MailArchiver.Services.Providers.MBox
         /// Processes an MBox file stream. For each email, calls the provided handler.
         /// Handles FormatException by skipping to the next mbox marker.
         /// </summary>
+        public Task ProcessMBoxFile(MBoxImportJob job, MailAccount targetAccount, CancellationToken ct,
+            Func<MimeMessage, string, Task<ImportResult>> handler) =>
+            ProcessMBoxFile(job, targetAccount, ct, (message, folder, _) => handler(message, folder));
+
+        /// <summary>
+        /// Same as above, but also hands the handler the message's bytes exactly as they are in
+        /// the MBox file (without the "From " separator line), to be kept as the original.
+        /// </summary>
         public async Task ProcessMBoxFile(MBoxImportJob job, MailAccount targetAccount, CancellationToken ct,
-            Func<MimeMessage, string, Task<ImportResult>> handler)
+            Func<MimeMessage, string, byte[]?, Task<ImportResult>> handler)
         {
             var stream = new FileStream(job.FilePath, FileMode.Open, FileAccess.Read);
             var parser = new MimeParser(stream, MimeFormat.Mbox);
+            using var rawReader = new FileStream(job.FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
 
             try
             {
@@ -42,7 +51,8 @@ namespace MailArchiver.Services.Providers.MBox
                         job.CurrentEmailSubject = message.Subject;
                         job.ProcessedBytes = stream.Position;
 
-                        var importResult = await handler(message, job.TargetFolder);
+                        var raw = ReadRawMessage(rawReader, parser.MboxMarkerOffset, parser.Position);
+                        var importResult = await handler(message, job.TargetFolder, raw);
                         message?.Dispose();
 
                         if (importResult.Success) job.SuccessCount++;
@@ -82,6 +92,34 @@ namespace MailArchiver.Services.Providers.MBox
                 parser = null;
                 stream?.Dispose();
             }
+        }
+
+        /// <summary>
+        /// Cuts one message out of the MBox file: the range from its "From " marker to where the
+        /// parser stopped, minus the marker line and the blank separator line before the next one.
+        /// Returns null when the range is not usable; the importer then re-serializes the message.
+        /// </summary>
+        internal static byte[]? ReadRawMessage(FileStream file, long markerOffset, long endOffset)
+        {
+            if (markerOffset < 0 || endOffset <= markerOffset || endOffset > file.Length || endOffset - markerOffset > int.MaxValue)
+                return null;
+
+            var slice = new byte[endOffset - markerOffset];
+            file.Position = markerOffset;
+            file.ReadExactly(slice);
+
+            var start = Array.IndexOf(slice, (byte)'\n');
+            if (start < 0)
+                return null;
+            start++;
+
+            var end = slice.Length;
+            if (end - start >= 2 && slice[end - 1] == '\n' && slice[end - 2] == '\n')
+                end--;
+            else if (end - start >= 4 && slice[end - 1] == '\n' && slice[end - 2] == '\r' && slice[end - 3] == '\n' && slice[end - 4] == '\r')
+                end -= 2;
+
+            return end > start ? slice[start..end] : null;
         }
 
         /// <summary>

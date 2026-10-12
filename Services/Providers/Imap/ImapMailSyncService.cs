@@ -961,6 +961,8 @@ namespace MailArchiver.Services.Providers.Imap
                                 // Non-transient errors (malformed messages, UTF-8 issues, etc.) bubble
                                 // up immediately to the outer catch and are counted as FailedEmails.
                                 MimeKit.MimeMessage? message = null;
+                                // The message exactly as the server delivered it; kept as the original.
+                                byte[]? rawMessage = null;
                                 var maxAttempts = TransientFetchRetryDelaysMs.Length + 1;
                                 var mboxRecoveryAttempted = false;
                                 var notFoundRecoveryAttempted = false;
@@ -969,7 +971,16 @@ namespace MailArchiver.Services.Providers.Imap
                                 {
                                     try
                                     {
-                                        message = await folder.GetMessageAsync(uid);
+                                        // Fetch the raw bytes and parse them ourselves, so the original
+                                        // can be archived byte for byte (same FETCH BODY.PEEK[] as
+                                        // GetMessageAsync, same parser).
+                                        using (var fetched = await folder.GetStreamAsync(uid, CancellationToken.None, null))
+                                        using (var buffer = new MemoryStream())
+                                        {
+                                            await fetched.CopyToAsync(buffer);
+                                            rawMessage = buffer.ToArray();
+                                        }
+                                        message = await MimeKit.MimeMessage.LoadAsync(new MemoryStream(rawMessage, writable: false));
                                         // Success - reset the consecutive throttling counter
                                         consecutiveTransientFailures = 0;
                                         break;
@@ -991,6 +1002,8 @@ namespace MailArchiver.Services.Providers.Imap
                                             using var rawStream = await folder.GetStreamAsync(uid, CancellationToken.None, null);
                                             using var buffered = new MemoryStream();
                                             await rawStream.CopyToAsync(buffered);
+                                            buffered.Position = 0;
+                                            rawMessage = buffered.ToArray();
                                             buffered.Position = 0;
                                             var recovery = await _mailCleaner.TryRecoverHeadersAsync(buffered);
                                             message = recovery.Message;
@@ -1028,6 +1041,9 @@ namespace MailArchiver.Services.Providers.Imap
                                             "Server reported UID {Uid} in folder {FolderName} as missing, attempting IMAP fallback fetch",
                                             uid, folder.FullName);
 
+                                        // The recovered message has no raw copy here; it is
+                                        // archived as a re-serialized original.
+                                        rawMessage = null;
                                         message = await ImapMessageRecovery.TryRecoverAsync(
                                             folder, uid, _logger, CancellationToken.None);
 
@@ -1181,7 +1197,7 @@ namespace MailArchiver.Services.Providers.Imap
                                     }
                                 }
 
-                                var isNew = await _coreService.ArchiveEmailAsync(account, message, isOutgoing, folder.FullName);
+                                var isNew = await _coreService.ArchiveEmailAsync(account, message, isOutgoing, folder.FullName, rawMessage);
                                 if (isNew)
                                 {
                                     result.NewEmails++;
