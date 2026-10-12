@@ -3,6 +3,7 @@ using MailArchiver.Data;
 using MailArchiver.Models;
 using MailArchiver.Models.ViewModels;
 using MailArchiver.Services;
+using MailArchiver.Services.Organizations;
 using MailArchiver.Services.Providers;
 using MailArchiver.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -282,7 +283,7 @@ namespace MailArchiver.Controllers
             // Aktive Jobs für die View
             if (_batchRestoreService != null)
             {
-                var activeJobs = _batchRestoreService.GetActiveJobs();
+                var activeJobs = _batchRestoreService.GetActiveJobs().VisibleIn(OrgScope);
                 ViewBag.ActiveJobsCount = activeJobs.Count;
             }
 
@@ -959,7 +960,7 @@ namespace MailArchiver.Controllers
             }
 
             // Check if user is allowed to access the target account
-            if (allowedAccountIds != null && !allowedAccountIds.Contains(model.TargetAccountId))
+            if (!await TargetAccountAllowedAsync(model.TargetAccountId, allowedAccountIds))
             {
                 _logger.LogWarning("User {Username} attempted to restore email to account {AccountId} which they don't have access to", 
                     authService?.GetCurrentUserDisplayName(HttpContext), model.TargetAccountId);
@@ -1128,6 +1129,15 @@ namespace MailArchiver.Controllers
         public async Task<IActionResult> BatchRestoreStart(List<int> ids, string returnUrl = null)
         {
             if (ids == null || !ids.Any())
+            {
+                TempData["ErrorMessage"] = "No emails selected for batch operation.";
+                return Redirect(returnUrl ?? Url.Action("Index"));
+            }
+
+            // Only emails of the caller's organization and accounts. The ids go to a background
+            // job that runs without user scope, so they are checked here for every role.
+            ids = await AccessibleEmailIdsAsync(ids);
+            if (!ids.Any())
             {
                 TempData["ErrorMessage"] = "No emails selected for batch operation.";
                 return Redirect(returnUrl ?? Url.Action("Index"));
@@ -1412,6 +1422,7 @@ namespace MailArchiver.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BatchRestore(BatchRestoreViewModel model)
         {
+            model.SelectedEmailIds = await AccessibleEmailIdsAsync(model.SelectedEmailIds ?? new List<int>());
             _logger.LogInformation("BatchRestore POST method called with {Count} emails, Target Account ID: {AccountId}, Target Folder: {Folder}",
                 model.SelectedEmailIds.Count, model.TargetAccountId, model.TargetFolder);
 
@@ -1432,7 +1443,7 @@ namespace MailArchiver.Controllers
             }
 
             // Check if user is allowed to access the target account
-            if (allowedAccountIds != null && !allowedAccountIds.Contains(model.TargetAccountId))
+            if (!await TargetAccountAllowedAsync(model.TargetAccountId, allowedAccountIds))
             {
                 _logger.LogWarning("User {Username} attempted to restore emails to account {AccountId} which they don't have access to", 
                     authService?.GetCurrentUserDisplayName(HttpContext), model.TargetAccountId);
@@ -1905,6 +1916,15 @@ namespace MailArchiver.Controllers
             var emailIds = idsString.Split(',').Select(int.Parse).ToList();
             _logger.LogInformation("Retrieved {Count} email IDs from session for async batch restore", emailIds.Count);
 
+            // Only emails of the caller's organization and accounts. The ids go to a background
+            // job that runs without user scope, so they are checked here for every role.
+            emailIds = await AccessibleEmailIdsAsync(emailIds);
+            if (!emailIds.Any())
+            {
+                TempData["ErrorMessage"] = "No emails selected for async batch restore.";
+                return Redirect(model.ReturnUrl ?? Url.Action("Index"));
+            }
+
             // Get current user's allowed accounts
             List<int> allowedAccountIds = null;
             var authService = HttpContext.RequestServices.GetService<MailArchiver.Services.IAuthenticationService>();
@@ -1922,7 +1942,7 @@ namespace MailArchiver.Controllers
             }
 
             // Check if user is allowed to access the target account
-            if (allowedAccountIds != null && !allowedAccountIds.Contains(model.TargetAccountId))
+            if (!await TargetAccountAllowedAsync(model.TargetAccountId, allowedAccountIds))
             {
                 _logger.LogWarning("User {Username} attempted to restore emails to account {AccountId} which they don't have access to", 
                     authService?.GetCurrentUserDisplayName(HttpContext), model.TargetAccountId);
@@ -2021,7 +2041,7 @@ namespace MailArchiver.Controllers
                 return RedirectToAction("Index");
             }
 
-            var job = _batchRestoreService.GetJob(jobId);
+            var job = _batchRestoreService.GetJob(jobId).VisibleIn(OrgScope);
             if (job == null)
             {
                 _logger.LogWarning("Job with ID {JobId} not found in BatchRestoreService", jobId);
@@ -2050,7 +2070,7 @@ namespace MailArchiver.Controllers
                 return Redirect(returnUrl ?? Url.Action("Index"));
             }
 
-            var job = _batchRestoreService.GetJob(jobId);
+            var job = _batchRestoreService.GetJob(jobId).VisibleIn(OrgScope);
             var actingUser = _authService?.GetCurrentUserDisplayName(HttpContext);
             var isAdmin = _authService?.IsCurrentUserAdmin(HttpContext) ?? false;
 
@@ -2086,7 +2106,7 @@ namespace MailArchiver.Controllers
                 return Redirect(returnUrl ?? Url.Action("Index"));
             }
 
-            var job = _syncJobService.GetJob(jobId);
+            var job = VisibleSyncJob(_syncJobService.GetJob(jobId));
             var actingUser = _authService?.GetCurrentUserDisplayName(HttpContext);
             var isAdmin = _authService?.IsCurrentUserAdmin(HttpContext) ?? false;
 
@@ -2131,8 +2151,8 @@ namespace MailArchiver.Controllers
                 return Redirect(returnUrl ?? Url.Action("Jobs"));
             }
 
-            var job = _syncJobService.GetJob(jobId);
-            var success = _syncJobService.AcknowledgeJobFailures(jobId);
+            var job = VisibleSyncJob(_syncJobService.GetJob(jobId));
+            var success = job != null && _syncJobService.AcknowledgeJobFailures(jobId);
 
             if (success)
             {
@@ -2162,7 +2182,7 @@ namespace MailArchiver.Controllers
             if (_batchRestoreService != null)
             {
                 // Get all jobs including completed ones
-                jobs = _batchRestoreService.GetAllJobs();
+                jobs = _batchRestoreService.GetAllJobs().VisibleIn(OrgScope);
             }
             
             return jobs;
@@ -2197,7 +2217,7 @@ namespace MailArchiver.Controllers
             if (_syncJobService != null)
             {
                 // Get all jobs but prioritize running jobs at the top
-                var allSyncJobs = _syncJobService.GetAllJobs();
+                var allSyncJobs = VisibleSyncJobs(_syncJobService.GetAllJobs());
                 syncJobs = allSyncJobs
                     .OrderByDescending(j => j.Status == SyncJobStatus.Running) // Running jobs first
                     // Then by when they ended, not when they began. Sorting finished jobs by start
@@ -2216,7 +2236,7 @@ namespace MailArchiver.Controllers
                 var mboxService = HttpContext.RequestServices.GetService<IMBoxImportService>();
                 if (mboxService != null)
                 {
-                    mboxJobs = mboxService.GetAllJobs()
+                    mboxJobs = mboxService.GetAllJobs().VisibleIn(OrgScope)
                         .OrderByDescending(j => j.Status == MBoxImportJobStatus.Running || j.Status == MBoxImportJobStatus.Queued)
                         .ThenByDescending(j => j.Completed ?? j.Created)
                         .Take(20) // Apply top 20 restriction
@@ -2233,7 +2253,7 @@ namespace MailArchiver.Controllers
             {
                 try
                 {
-                    exportJobs = _exportService.GetAllJobs()
+                    exportJobs = _exportService.GetAllJobs().VisibleIn(OrgScope)
                         .OrderByDescending(j => j.Status == AccountExportJobStatus.Running || j.Status == AccountExportJobStatus.Queued)
                         .ThenByDescending(j => j.Completed ?? j.Created)
                         .Take(20) // Apply top 20 restriction
@@ -2251,7 +2271,7 @@ namespace MailArchiver.Controllers
                 var selectedEmailsExportService = HttpContext.RequestServices.GetService<ISelectedEmailsExportService>();
                 if (selectedEmailsExportService != null)
                 {
-                    selectedEmailsExportJobs = selectedEmailsExportService.GetAllJobs()
+                    selectedEmailsExportJobs = selectedEmailsExportService.GetAllJobs().VisibleIn(OrgScope)
                         .OrderByDescending(j => j.Status == SelectedEmailsExportJobStatus.Running || j.Status == SelectedEmailsExportJobStatus.Queued)
                         .ThenByDescending(j => j.Completed ?? j.Created)
                         .Take(20) // Apply top 20 restriction
@@ -2269,7 +2289,7 @@ namespace MailArchiver.Controllers
                 var emlImportService = HttpContext.RequestServices.GetService<IEmlImportService>();
                 if (emlImportService != null)
                 {
-                    emlImportJobs = emlImportService.GetAllJobs()
+                    emlImportJobs = emlImportService.GetAllJobs().VisibleIn(OrgScope)
                         .OrderByDescending(j => j.Status == EmlImportJobStatus.Running || j.Status == EmlImportJobStatus.Queued)
                         .ThenByDescending(j => j.Completed ?? j.Created)
                         .Take(20) // Apply top 20 restriction consistent with other job types
@@ -2289,7 +2309,7 @@ namespace MailArchiver.Controllers
                 var accountDeletionService = HttpContext.RequestServices.GetService<IMailAccountDeletionService>();
                 if (accountDeletionService != null)
                 {
-                    accountDeletionJobs = accountDeletionService.GetAllJobs()
+                    accountDeletionJobs = accountDeletionService.GetAllJobs().VisibleIn(OrgScope)
                         .OrderByDescending(j => j.Status == MailAccountDeletionJobStatus.Running || j.Status == MailAccountDeletionJobStatus.Queued)
                         // By when they ended, like every other panel: an account deletion can run
                         // for hours, and sorting it by its start time would sink it below quick
@@ -2308,7 +2328,7 @@ namespace MailArchiver.Controllers
             {
                 if (_emailDeletionService != null)
                 {
-                    emailDeletionJobs = _emailDeletionService.GetAllJobs()
+                    emailDeletionJobs = _emailDeletionService.GetAllJobs().VisibleIn(OrgScope)
                         .OrderByDescending(j => j.Status == EmailDeletionJobStatus.Running || j.Status == EmailDeletionJobStatus.Queued)
                         // By when they ended, like every other panel (see the account deletion list above)
                         .ThenByDescending(j => j.Completed ?? j.Created)
@@ -2353,7 +2373,7 @@ namespace MailArchiver.Controllers
                 return RedirectToAction("Index");
             }
 
-            var job = _selectedEmailsExportService.GetJob(jobId);
+            var job = _selectedEmailsExportService.GetJob(jobId).VisibleIn(OrgScope);
             if (job == null)
             {
                 _logger.LogWarning("Job with ID {JobId} not found in SelectedEmailsExportService", jobId);
@@ -2382,7 +2402,7 @@ namespace MailArchiver.Controllers
                 return Redirect(returnUrl ?? Url.Action("Index"));
             }
 
-            var job = _selectedEmailsExportService.GetJob(jobId);
+            var job = _selectedEmailsExportService.GetJob(jobId).VisibleIn(OrgScope);
             var actingUser = _authService?.GetCurrentUserDisplayName(HttpContext);
             var isAdmin = _authService?.IsCurrentUserAdmin(HttpContext) ?? false;
 
@@ -2423,7 +2443,7 @@ namespace MailArchiver.Controllers
                 return RedirectToAction("Index");
             }
 
-            var job = _selectedEmailsExportService.GetJob(jobId);
+            var job = _selectedEmailsExportService.GetJob(jobId).VisibleIn(OrgScope);
             if (job == null)
             {
                 TempData["ErrorMessage"] = "Selected emails export job not found.";
@@ -2476,7 +2496,7 @@ namespace MailArchiver.Controllers
                 return Json(new { error = "Invalid job ID" });
             }
 
-            var job = _batchRestoreService.GetJob(jobId);
+            var job = _batchRestoreService.GetJob(jobId).VisibleIn(OrgScope);
             if (job == null)
             {
                 return Json(new { error = "Job not found" });
@@ -2941,6 +2961,47 @@ namespace MailArchiver.Controllers
             return Redirect(returnUrl ?? Url.Action("Index"));
         }
         
+        // Background jobs live in singleton services shared by all organizations; every job
+        // page only sees jobs of the caller's organization (see JobOrganization).
+        private IOrganizationContext OrgScope => HttpContext.RequestServices.GetRequiredService<IOrganizationContext>();
+
+        // Sync jobs are mostly started by the scheduler (no organization stamped), so they are
+        // matched by their mail account instead.
+        private List<SyncJob> VisibleSyncJobs(IEnumerable<SyncJob> jobs)
+        {
+            if (OrgScope.IsSystem)
+                return jobs.ToList();
+            var accounts = _context.MailAccounts.Select(a => a.Id).ToHashSet();
+            return jobs.Where(j => accounts.Contains(j.MailAccountId)).ToList();
+        }
+
+        private SyncJob? VisibleSyncJob(SyncJob? job) =>
+            job == null ? null : VisibleSyncJobs(new[] { job }).FirstOrDefault();
+
+        /// <summary>
+        /// The requested email ids the caller may use: inside the caller's organization (the
+        /// query is filtered) and, for users without admin rights, in their accounts.
+        /// </summary>
+        private async Task<List<int>> AccessibleEmailIdsAsync(IEnumerable<int> ids)
+        {
+            var allowed = await HttpContext.RequestServices.GetRequiredService<IAccountAccessResolver>()
+                .GetAllowedAccountIdsAsync(HttpContext);
+            var result = new List<int>();
+            foreach (var chunk in ids.Distinct().Chunk(5000))
+            {
+                var query = _context.ArchivedEmails.Where(e => chunk.Contains(e.Id));
+                if (allowed != null)
+                    query = query.Where(e => allowed.Contains(e.MailAccountId));
+                result.AddRange(await query.Select(e => e.Id).ToListAsync());
+            }
+            return result;
+        }
+
+        /// <summary>A restore target must be an account of the caller's organization (and, for users, theirs).</summary>
+        private async Task<bool> TargetAccountAllowedAsync(int accountId, List<int>? allowedAccountIds) =>
+            (allowedAccountIds == null || allowedAccountIds.Contains(accountId))
+            && await _context.MailAccounts.AnyAsync(a => a.Id == accountId);
+
         private Microsoft.Extensions.Localization.IStringLocalizer<ComplianceResource> ComplianceLocalizer =>
             HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<ComplianceResource>>();
 
@@ -2953,6 +3014,15 @@ namespace MailArchiver.Controllers
             if (ids == null || !ids.Any())
             {
                 TempData["ErrorMessage"] = "No emails selected for deletion.";
+                return Redirect(returnUrl ?? Url.Action("Index"));
+            }
+
+            // Only emails of the caller's organization and accounts. The ids go to a background
+            // job that runs without user scope, so they are checked here for every role.
+            ids = await AccessibleEmailIdsAsync(ids);
+            if (!ids.Any())
+            {
+                TempData["ErrorMessage"] = "You do not have access to any of the selected emails.";
                 return Redirect(returnUrl ?? Url.Action("Index"));
             }
 
@@ -3134,7 +3204,7 @@ namespace MailArchiver.Controllers
                 return RedirectToAction("Index");
             }
             
-            var job = _emailDeletionService.GetJob(jobId);
+            var job = _emailDeletionService.GetJob(jobId).VisibleIn(OrgScope);
             if (job == null)
             {
                 TempData["ErrorMessage"] = "Email deletion job not found.";
@@ -3162,7 +3232,7 @@ namespace MailArchiver.Controllers
                 return Redirect(returnUrl ?? Url.Action("Index"));
             }
 
-            var job = _emailDeletionService.GetJob(jobId);
+            var job = _emailDeletionService.GetJob(jobId).VisibleIn(OrgScope);
             var actingUser = _authService?.GetCurrentUserDisplayName(HttpContext);
             var isAdmin = _authService?.IsCurrentUserAdmin(HttpContext) ?? false;
 
@@ -3195,6 +3265,15 @@ namespace MailArchiver.Controllers
             if (ids == null || !ids.Any())
             {
                 TempData["ErrorMessage"] = "No emails selected for export.";
+                return Redirect(returnUrl ?? Url.Action("Index"));
+            }
+
+            // Only emails of the caller's organization and accounts. The ids go to a background
+            // job that runs without user scope, so they are checked here for every role.
+            ids = await AccessibleEmailIdsAsync(ids);
+            if (!ids.Any())
+            {
+                TempData["ErrorMessage"] = "You do not have access to any of the selected emails.";
                 return Redirect(returnUrl ?? Url.Action("Index"));
             }
 

@@ -124,7 +124,7 @@ public class OrganizationIsolationTests : ComplianceTestBase
         var user = new User
         {
             Username = "u-" + Guid.NewGuid().ToString("N")[..10],
-            Email = Guid.NewGuid().ToString("N")[..10] + "@test.local",
+            Email = Guid.NewGuid().ToString("N")[..10] + "@compliance.test",
             OrganizationId = a.Id
         };
         ctx.Users.Add(user);
@@ -175,7 +175,7 @@ public class OrganizationIsolationTests : ComplianceTestBase
         await using var userCtx = ContextFor(orgId);
         var account = new MailAccount
         {
-            Name = "created-by-user", EmailAddress = Guid.NewGuid().ToString("N") + "@test.local",
+            Name = "created-by-user", EmailAddress = Guid.NewGuid().ToString("N") + "@compliance.test",
             Provider = ProviderType.IMAP, LastSync = DateTime.UtcNow
         };
         userCtx.MailAccounts.Add(account);
@@ -183,7 +183,7 @@ public class OrganizationIsolationTests : ComplianceTestBase
         Assert.Equal(orgId, account.OrganizationId);
 
         await using var noOrg = ContextFor(null, providerAdmin: true);
-        noOrg.MailAccounts.Add(new MailAccount { Name = "x", EmailAddress = "x@test.local", LastSync = DateTime.UtcNow });
+        noOrg.MailAccounts.Add(new MailAccount { Name = "x", EmailAddress = "x@compliance.test", LastSync = DateTime.UtcNow });
         await Assert.ThrowsAsync<InvalidOperationException>(() => noOrg.SaveChangesAsync());
     }
 

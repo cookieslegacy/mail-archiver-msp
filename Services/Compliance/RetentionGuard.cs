@@ -26,8 +26,12 @@ namespace MailArchiver.Services.Compliance
                     .Select(e => e.Id)
                     .ToListAsync(ct));
             }
+            // Ids the context cannot see (other organization, deleted) are neither.
+            var visible = new HashSet<int>();
+            foreach (var chunk in ids.Chunk(5000))
+                visible.UnionWith(await context.ArchivedEmails.Where(e => chunk.Contains(e.Id)).Select(e => e.Id).ToListAsync(ct));
             var protectedSet = protectedIds.ToHashSet();
-            return (ids.Where(id => !protectedSet.Contains(id)).ToList(), protectedIds);
+            return (ids.Where(id => visible.Contains(id) && !protectedSet.Contains(id)).ToList(), protectedIds);
         }
 
         /// <summary>Number of emails of a mail account that are still protected.</summary>

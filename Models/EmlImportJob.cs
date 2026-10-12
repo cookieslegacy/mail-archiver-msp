@@ -1,7 +1,10 @@
 namespace MailArchiver.Models
 {
-    public class EmlImportJob
+    public class EmlImportJob : MailArchiver.Services.Organizations.IOrganizationScopedJob
     {
+        // Organization the job was queued in (see JobOrganization); checked by every job page.
+        public int? OrganizationId { get; set; } = MailArchiver.Services.Organizations.JobOrganization.Current();
+
         public string JobId { get; set; } = Guid.NewGuid().ToString();
         public string FileName { get; set; } = string.Empty;
         public string FilePath { get; set; } = string.Empty;

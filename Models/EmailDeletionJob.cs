@@ -12,8 +12,11 @@ namespace MailArchiver.Models
         Cancelled
     }
 
-    public class EmailDeletionJob
+    public class EmailDeletionJob : MailArchiver.Services.Organizations.IOrganizationScopedJob
     {
+        // Organization the job was queued in (see JobOrganization); checked by every job page.
+        public int? OrganizationId { get; set; } = MailArchiver.Services.Organizations.JobOrganization.Current();
+
         public string JobId { get; set; } = Guid.NewGuid().ToString();
         public List<int> EmailIds { get; set; } = new List<int>();
         public int TotalEmails { get; set; }

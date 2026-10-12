@@ -75,7 +75,7 @@ namespace MailArchiver.Controllers
             // Aktive Jobs für Dashboard anzeigen
             if (_batchRestoreService != null)
             {
-                var activeJobs = _batchRestoreService.GetActiveJobs();
+                var activeJobs = MailArchiver.Services.Organizations.JobOrganization.VisibleIn(_batchRestoreService.GetActiveJobs(), HttpContext.RequestServices.GetRequiredService<MailArchiver.Services.Organizations.IOrganizationContext>());
                 ViewBag.ActiveJobsCount = activeJobs.Count;
             }
 

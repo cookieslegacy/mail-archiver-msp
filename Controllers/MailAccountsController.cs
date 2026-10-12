@@ -3,6 +3,7 @@ using MailArchiver.Models;
 using MailArchiver.Models.ViewModels;
 using MailArchiver.ViewModels;
 using MailArchiver.Services;
+using MailArchiver.Services.Organizations;
 using MailArchiver.Services.Providers;
 using MailArchiver.Services.Shared;
 using MailArchiver.Utilities;
@@ -97,6 +98,9 @@ namespace MailArchiver.Controllers
         private readonly IBatchRestoreService _batchRestoreService;
         private readonly MailArchiver.Utilities.DateTimeHelper _dateTimeHelper;
 
+        private MailArchiver.Services.Organizations.IOrganizationContext OrgScope =>
+            HttpContext.RequestServices.GetRequiredService<MailArchiver.Services.Organizations.IOrganizationContext>();
+
         private async Task<bool> HasAccessToAccountAsync(int accountId)
         {
             // Use the authentication service to get user info properly
@@ -108,11 +112,13 @@ namespace MailArchiver.Controllers
             _logger.LogInformation("HasAccessToAccountAsync - Current username: {Username}, IsAdmin: {IsAdmin}, IsSelfManager: {IsSelfManager}", 
                 currentUsername, isAdmin, isSelfManager);
 
-            // Admin users have access to all accounts
+            // Admin users have access to all accounts of their organization (the query is
+            // filtered by organization; an id of another organization is not found).
             if (isAdmin)
             {
-                _logger.LogInformation("User is admin, granting access to account {AccountId}", accountId);
-                return true;
+                var visible = await _context.MailAccounts.AnyAsync(a => a.Id == accountId);
+                _logger.LogInformation("User is admin, access to account {AccountId}: {Visible}", accountId, visible);
+                return visible;
             }
 
             // SelfManager users have access only to assigned accounts
@@ -1229,7 +1235,7 @@ namespace MailArchiver.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var job = _mailAccountDeletionService.GetJob(jobId);
+            var job = _mailAccountDeletionService.GetJob(jobId).VisibleIn(OrgScope);
             if (job == null)
             {
                 TempData["ErrorMessage"] = _localizer["DeletionJobNotFound"].Value;
@@ -1253,13 +1259,19 @@ namespace MailArchiver.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult CancelDeletion(string jobId, string returnUrl = null)
         {
+            var authServiceForCancel = HttpContext.RequestServices.GetRequiredService<MailArchiver.Services.IAuthenticationService>();
             if (string.IsNullOrEmpty(jobId))
             {
                 TempData["ErrorMessage"] = _localizer["InvalidDeletionJobID"].Value;
                 return Redirect(returnUrl ?? Url.Action(nameof(Index)));
             }
 
-            var success = _mailAccountDeletionService.CancelJob(jobId);
+            // Only a job of the caller's organization, queued by an account the caller may manage.
+            var deletionJob = _mailAccountDeletionService.GetJob(jobId).VisibleIn(OrgScope);
+            var success = deletionJob != null
+                && (authServiceForCancel.IsCurrentUserAdmin(HttpContext)
+                    || JobOwnership.MayCancel(authServiceForCancel.GetCurrentUserDisplayName(HttpContext), false, deletionJob.UserId))
+                && _mailAccountDeletionService.CancelJob(jobId);
             if (success)
             {
                 TempData["SuccessMessage"] = _localizer["DeletionCancelled"].Value;
@@ -1862,7 +1874,7 @@ namespace MailArchiver.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var job = _mboxImportService.GetJob(jobId);
+            var job = _mboxImportService.GetJob(jobId).VisibleIn(OrgScope);
             if (job == null)
             {
                 TempData["ErrorMessage"] = _localizer["MBoxImportJobNotFound"].Value;
@@ -1891,7 +1903,7 @@ namespace MailArchiver.Controllers
                 return Redirect(returnUrl ?? Url.Action(nameof(Index)));
             }
 
-            var job = _mboxImportService.GetJob(jobId);
+            var job = _mboxImportService.GetJob(jobId).VisibleIn(OrgScope);
             if (job != null)
             {
                 // Check if user has access to the target account
@@ -2158,7 +2170,7 @@ namespace MailArchiver.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var job = _emlImportService.GetJob(jobId);
+            var job = _emlImportService.GetJob(jobId).VisibleIn(OrgScope);
             if (job == null)
             {
                 TempData["ErrorMessage"] = _localizer["EmlImportJobNotFound"].Value;
@@ -2187,7 +2199,7 @@ namespace MailArchiver.Controllers
                 return Redirect(returnUrl ?? Url.Action(nameof(Index)));
             }
 
-            var job = _emlImportService.GetJob(jobId);
+            var job = _emlImportService.GetJob(jobId).VisibleIn(OrgScope);
             if (job != null)
             {
                 // Check if user has access to the target account
@@ -2315,7 +2327,7 @@ namespace MailArchiver.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var job = _exportService.GetJob(jobId);
+            var job = _exportService.GetJob(jobId).VisibleIn(OrgScope);
             if (job == null)
             {
                 TempData["ErrorMessage"] = _localizer["ExportJobNotFound"].Value;
@@ -2342,7 +2354,7 @@ namespace MailArchiver.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            var job = _exportService.GetJob(jobId);
+            var job = _exportService.GetJob(jobId).VisibleIn(OrgScope);
             if (job == null)
             {
                 TempData["ErrorMessage"] = _localizer["ExportJobNotFound"].Value;
@@ -2398,7 +2410,7 @@ namespace MailArchiver.Controllers
                 return Redirect(returnUrl ?? Url.Action(nameof(Index)));
             }
 
-            var job = _exportService.GetJob(jobId);
+            var job = _exportService.GetJob(jobId).VisibleIn(OrgScope);
             if (job != null)
             {
                 // Check if user has access to the account

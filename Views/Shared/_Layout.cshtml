@@ -90,7 +90,7 @@
                                             Context.RequestServices.GetService<MailArchiver.Services.IBatchRestoreService>();
                                             if (batchService != null)
                                             {
-                                                var activeJobs = batchService.GetActiveJobs();
+                                                var activeJobs = MailArchiver.Services.Organizations.JobOrganization.VisibleIn(batchService.GetActiveJobs(), Context.RequestServices.GetRequiredService<MailArchiver.Services.Organizations.IOrganizationContext>());
                                                 if (activeJobs.Count > 0)
                                                 {
                                                     <span class="badge bg-danger rounded-pill ms-1">@activeJobs.Count</span>

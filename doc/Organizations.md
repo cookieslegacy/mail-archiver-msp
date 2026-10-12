@@ -114,3 +114,10 @@ AV-Vertrag fest.
 * Eine Organisation kann nicht gelöscht werden, solange Daten darin liegen (Fremdschlüssel).
   Daten eines Kunden werden über die Aufbewahrungsfristen gelöscht.
 * Der Support-Zugriff ist kein Nur-Lese-Zugriff; er ist protokolliert, nicht eingeschränkt.
+* Benutzernamen und E-Mail-Adressen von Benutzern sind instanzweit eindeutig. Ein Admin
+  erkennt beim Anlegen also, dass ein Name in irgendeiner Organisation bereits vergeben ist
+  (nicht in welcher).
+* Hintergrund-Jobs (Exporte, Wiederherstellungen, Importe, Löschungen) laufen ohne
+  Benutzerkontext. Sie tragen die Organisation, in der sie gestartet wurden; alle IDs
+  werden beim Einreihen gegen die Organisation der anfragenden Person geprüft, und
+  Status-, Download- und Abbruchseiten zeigen nur Jobs der eigenen Organisation.

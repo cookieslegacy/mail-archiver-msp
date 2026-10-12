@@ -57,7 +57,7 @@ public abstract class ComplianceTestBase
         var account = new MailAccount
         {
             Name = "acct-" + Guid.NewGuid().ToString("N")[..10],
-            EmailAddress = Guid.NewGuid().ToString("N") + "@test.local",
+            EmailAddress = Guid.NewGuid().ToString("N") + "@compliance.test",
             Provider = ProviderType.IMAP,
             IsEnabled = true,
             LastSync = DateTime.UtcNow,
@@ -76,7 +76,7 @@ public abstract class ComplianceTestBase
     protected static ArchivedEmail NewEmail(MailAccount account, string subject = "subject", DateTime? sent = null) => new()
     {
         MailAccountId = account.Id,
-        MessageId = Guid.NewGuid().ToString("N") + "@test.local",
+        MessageId = Guid.NewGuid().ToString("N") + "@compliance.test",
         Subject = subject,
         From = "a@example.com",
         To = "b@example.com",

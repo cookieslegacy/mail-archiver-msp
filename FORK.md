@@ -36,6 +36,9 @@ Worauf beim Mergen zu achten ist:
 * **Neue Stellen mit direktem SQL** (`NpgsqlCommand`, `FromSql…`, `ExecuteSql…`) umgehen
   die Abfragefilter: auf die Organisation einschränken und
   `OrganizationConnectionInterceptor.ApplyScopeAsync` verwenden.
+* **Neue Hintergrund-Jobs**: Job-Modell implementiert `IOrganizationScopedJob`; jede
+  Seite, die Jobs auflistet oder per Id holt, filtert mit `.VisibleIn(scope)`; übergebene
+  Mail-IDs vor dem Einreihen durch den gefilterten Kontext schicken.
 * **Neue Schreibwege für E-Mails** müssen `IOriginalArchiveService.AttachAsync` aufrufen
   (sonst werden die E-Mails nur nachträglich versiegelt).
 * **Neue Löschwege** werden von der Datenbank geprüft; die Oberfläche sollte `MA001`/`MA002`
