@@ -61,6 +61,10 @@ namespace MailArchiver.Models
         ProviderSupportAccess,
         LegalHold,
         IntegrityCheck,
-        RetentionPurge
+        RetentionPurge,
+        // Data protection (GDPR) events
+        DataSubjectRequest,
+        ProcessingRestriction,
+        AuditLogPrune
     }
 }

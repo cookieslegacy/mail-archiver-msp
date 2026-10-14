@@ -24,6 +24,10 @@
         {
             <span class="badge bg-danger"><i class="bi bi-pause-circle me-1"></i>@CL["LegalHold"]</span>
         }
+        @if (Model.ProcessingRestricted)
+        {
+            <span class="badge bg-dark" title="@Model.RestrictionReason"><i class="bi bi-eye-slash me-1"></i>@CL["ProcessingRestricted"]</span>
+        }
         <div class="ms-auto d-flex gap-2">
             @if (Model.HasBytes)
             {
@@ -33,6 +37,41 @@
             }
             @if (Model.CanSetHold)
             {
+                @if (Model.ProcessingRestricted)
+                {
+                    <form asp-controller="Compliance" asp-action="Restrict" method="post" class="d-inline">
+                        <input type="hidden" name="ids" value="@Model.EmailId" />
+                        <input type="hidden" name="restricted" value="false" />
+                        <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                        <button type="submit" class="btn btn-sm btn-outline-dark"><i class="bi bi-eye me-1"></i>@CL["LiftRestriction"]</button>
+                    </form>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#restrict-@Model.EmailId">
+                        <i class="bi bi-eye-slash me-1"></i>@CL["RestrictProcessing"]
+                    </button>
+                    <div class="modal fade text-start" id="restrict-@Model.EmailId" tabindex="-1">
+                        <div class="modal-dialog">
+                            <form asp-controller="Compliance" asp-action="Restrict" method="post" class="modal-content">
+                                <input type="hidden" name="ids" value="@Model.EmailId" />
+                                <input type="hidden" name="restricted" value="true" />
+                                <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                                <div class="modal-header"><h5 class="modal-title">@CL["RestrictProcessing"]</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body">
+                                    <p class="small text-muted">@CL["RestrictProcessingHelp"]</p>
+                                    <label class="form-label" for="restrict-reason-@Model.EmailId">@CL["Reason"]</label>
+                                    <input type="text" class="form-control" id="restrict-reason-@Model.EmailId" name="reason" required />
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@CL["Cancel"]</button>
+                                    <button type="submit" class="btn btn-dark">@CL["RestrictProcessing"]</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                }
                 <form asp-controller="Compliance" asp-action="EmailLegalHold" method="post" class="d-inline">
                     <input type="hidden" name="id" value="@Model.EmailId" />
                     <input type="hidden" name="hold" value="@(!Model.LegalHold ? "true" : "false")" />

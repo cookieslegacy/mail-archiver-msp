@@ -11,7 +11,8 @@ Dieser Fork von [s1t5/mail-archiver](https://github.com/s1t5/mail-archiver) erg�
   Legal Hold, optional WORM-Speicher (S3 Object Lock), hash-verkettetes Audit-Log,
   tägliche Anker (optional RFC-3161-Zeitstempel), Integritätsprüfung, unabhängiges
   Prüfskript. → [doc/Compliance.md](doc/Compliance.md),
-  [Vorlage Verfahrensdokumentation](doc/Verfahrensdokumentation.md)
+  [Vorlage Verfahrensdokumentation](doc/Verfahrensdokumentation.md),
+  [Datenschutz (DSGVO)](doc/Datenschutz.md)
 
 ## Upstream-Updates einspielen
 
@@ -52,6 +53,9 @@ Worauf beim Mergen zu achten ist:
 * **Neue Wege, Postfächer anzulegen**, prüft die Datenbank gegen das Paket (`MA004`); die
   Oberfläche meldet das über `QuotaService.IsMailAccountLimitError`. **Neue Wege, E-Mails
   zu holen oder zu importieren**, fragen vorher `QuotaGuard.ArchivingBlockedMessageAsync`.
+* **Neue Stellen, die E-Mails für Benutzer anzeigen**, erben den Abfragefilter für
+  eingeschränkte E-Mails (Art. 18); direktes SQL muss `"ProcessingRestricted"` selbst
+  ausschließen, wenn `OrganizationScope.CanSeeRestricted` falsch ist.
 * Danach: `dotnet test` (die Tests unter `tests/MailArchiver.Tests/Compliance` prüfen
   Trennung, Ketten, Fristen, Kontingente und Manipulationserkennung).
 

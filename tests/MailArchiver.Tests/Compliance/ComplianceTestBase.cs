@@ -39,8 +39,8 @@ public abstract class ComplianceTestBase
         new(_options, NullCredentialProtector.Instance, SystemOrganizationContext.Instance);
 
     /// <summary>A context of a signed in user of the given organization.</summary>
-    protected MailArchiverDbContext ContextFor(int? organizationId, bool providerAdmin = false) =>
-        new(_options, NullCredentialProtector.Instance, new FixedOrganizationContext(organizationId, providerAdmin));
+    protected MailArchiverDbContext ContextFor(int? organizationId, bool providerAdmin = false, bool canSeeRestricted = true) =>
+        new(_options, NullCredentialProtector.Instance, new FixedOrganizationContext(organizationId, providerAdmin, canSeeRestricted));
 
     protected static async Task<Organization> CreateOrganizationAsync(MailArchiverDbContext ctx, int retentionYears = 0)
     {

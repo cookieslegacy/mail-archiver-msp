@@ -37,6 +37,12 @@ namespace MailArchiver.Services.Organizations
         /// <see cref="ProviderManagementFilter"/> keeps every page that shows email content closed.
         /// </summary>
         bool IsProviderManagementAccess { get; }
+
+        /// <summary>
+        /// Admins and auditors see emails whose processing is restricted (Art. 18 GDPR);
+        /// everyone else does not.
+        /// </summary>
+        bool CanSeeRestricted { get; }
     }
 
     /// <summary>Claim and session keys shared by sign-in and the organization context.</summary>
@@ -98,22 +104,39 @@ namespace MailArchiver.Services.Organizations
 
         public bool IsProviderManagementAccess => !SupportOrganizationId.HasValue && ManagementOrganizationId.HasValue;
 
+        public bool CanSeeRestricted =>
+            AuthenticatedUser is { } user && (user.IsInRole("Admin") || user.IsInRole(OrganizationClaims.AuditorRole));
+
         public int? OrganizationId
         {
             get
             {
+                var http = Http;
                 var user = AuthenticatedUser;
-                if (user == null)
+                if (http == null || user == null)
                     return null;
 
-                var support = SupportOrganizationId ?? ManagementOrganizationId;
-                if (support.HasValue)
-                    return support;
+                // Resolved once per request and kept in Items: work that an action starts in
+                // the background (manual sync, imports) may still run after the response has
+                // been sent, when the session is gone and only the claims remain. For a
+                // provider admin in support or management mode that would silently switch
+                // the organization. Items live until the request is disposed; after that the
+                // accessor returns null and the work continues in system scope.
+                if (http.Items.TryGetValue(ItemsKey, out var resolved))
+                    return (int?)resolved;
 
-                var claim = user.FindFirst(OrganizationClaims.OrganizationId)?.Value;
-                return int.TryParse(claim, out var id) ? id : null;
+                var organizationId = SupportOrganizationId ?? ManagementOrganizationId;
+                if (!organizationId.HasValue)
+                {
+                    var claim = user.FindFirst(OrganizationClaims.OrganizationId)?.Value;
+                    organizationId = int.TryParse(claim, out var id) ? id : null;
+                }
+                http.Items[ItemsKey] = organizationId;
+                return organizationId;
             }
         }
+
+        private const string ItemsKey = "MailArchiver.OrganizationId";
 
         private int? SupportOrganizationId => SessionOrganization(OrganizationClaims.SupportOrganizationSessionKey);
 
@@ -149,16 +172,20 @@ namespace MailArchiver.Services.Organizations
         public int? OrganizationId => null;
         public bool IsProviderSupportAccess => false;
         public bool IsProviderManagementAccess => false;
+        public bool CanSeeRestricted => true;
     }
 
     /// <summary>A fixed organization, for tests and for jobs acting on behalf of one organization.</summary>
     public sealed class FixedOrganizationContext : IOrganizationContext
     {
-        public FixedOrganizationContext(int? organizationId, bool isProviderAdmin = false)
+        public FixedOrganizationContext(int? organizationId, bool isProviderAdmin = false, bool canSeeRestricted = true)
         {
             OrganizationId = organizationId;
             IsProviderAdmin = isProviderAdmin;
+            CanSeeRestricted = canSeeRestricted;
         }
+
+        public bool CanSeeRestricted { get; }
 
         public bool IsSystem => false;
         public bool IsAnonymous => false;

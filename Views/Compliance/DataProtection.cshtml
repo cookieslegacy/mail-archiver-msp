@@ -1,0 +1,154 @@
+@model MailArchiver.Controllers.DataProtectionViewModel
+@{
+    ViewData["Title"] = CL["DataProtection"];
+    var result = Model.Result;
+    var here = Context.Request.Path + Context.Request.QueryString;
+}
+<div class="container-fluid">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+        <h1 class="h3 mb-0"><i class="bi bi-person-lock me-2"></i>@CL["DataProtection"]</h1>
+        <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>@CL["Back"]</a>
+    </div>
+
+    <!-- Art. 15: access request -->
+    <div class="card mb-3">
+        <div class="card-header bg-light"><i class="bi bi-search me-1"></i>@CL["SubjectAccessRequest"]</div>
+        <div class="card-body">
+            <p class="small text-muted">@CL["SubjectAccessHelp"]</p>
+            <form method="get" asp-action="DataProtection" class="row g-2 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label" for="address">@CL["EmailAddressOfPerson"]</label>
+                    <input type="text" class="form-control" id="address" name="address" value="@(result?.Address)" placeholder="max.mustermann@example.com" required />
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-1"></i>@CL["Search"]</button>
+                </div>
+            </form>
+
+            @if (result != null)
+            {
+                <hr />
+                <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
+                    <div><strong>@result.Total.ToString("N0")</strong> @CL["EmailsNaming", result.Address]</div>
+                    @foreach (var a in result.PerAccount.OrderByDescending(x => x.Value))
+                    {
+                        <span class="badge bg-secondary">@a.Key: @a.Value.ToString("N0")</span>
+                    }
+                    @if (result.Total > 0)
+                    {
+                        <div class="ms-auto d-flex gap-2">
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="SubjectAccessCsv" asp-route-address="@result.Address">
+                                <i class="bi bi-filetype-csv me-1"></i>@CL["OverviewCsv"]
+                            </a>
+                            <form asp-action="SubjectAccessExport" method="post">
+                                <input type="hidden" name="address" value="@result.Address" />
+                                <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-zip me-1"></i>@CL["ExportEmlZip"]</button>
+                            </form>
+                        </div>
+                    }
+                </div>
+                @if (result.Truncated)
+                {
+                    <div class="alert alert-info small py-2">@CL["ListTruncated", result.Emails.Count]</div>
+                }
+                @if (result.Total > 0)
+                {
+                    <form asp-action="Restrict" method="post" id="restrict-form">
+                        <input type="hidden" name="restricted" value="true" />
+                        <input type="hidden" name="returnUrl" value="@here" />
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-2">
+                                <thead>
+                                    <tr>
+                                        @if (Model.CanEdit) { <th style="width: 1%"><input type="checkbox" class="form-check-input" onclick="document.querySelectorAll('#restrict-form input[name=ids]').forEach(c => c.checked = this.checked)" /></th> }
+                                        <th>@CL["Date"]</th>
+                                        <th>@CL["Account"]</th>
+                                        <th>@CL["From"]</th>
+                                        <th>@CL["To"]</th>
+                                        <th>@CL["Subject"]</th>
+                                        <th class="text-end">@CL["Attachments"]</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var e in result.Emails)
+                                    {
+                                        <tr class="@(e.ProcessingRestricted ? "table-secondary" : "")">
+                                            @if (Model.CanEdit) { <td><input type="checkbox" class="form-check-input" name="ids" value="@e.Id" disabled="@e.ProcessingRestricted" /></td> }
+                                            <td class="text-nowrap small">@e.SentDate.ToString("g")</td>
+                                            <td class="small">@e.Account</td>
+                                            <td class="small text-break">@e.From</td>
+                                            <td class="small text-break">@e.To</td>
+                                            <td class="small">
+                                                <a asp-controller="Emails" asp-action="Details" asp-route-id="@e.Id">@(string.IsNullOrWhiteSpace(e.Subject) ? "(–)" : e.Subject)</a>
+                                                @if (e.ProcessingRestricted) { <span class="badge bg-dark ms-1">@CL["ProcessingRestricted"]</span> }
+                                            </td>
+                                            <td class="text-end small">@e.Attachments</td>
+                                            <td class="small">@if (e.HasOriginal) { <i class="bi bi-shield-check text-success" title="@CL["WithOriginal"]"></i> }</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        @if (Model.CanEdit)
+                        {
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <input type="text" class="form-control form-control-sm" style="max-width: 420px" name="reason" placeholder="@CL["RestrictionReasonPlaceholder"]" />
+                                <button type="submit" class="btn btn-sm btn-outline-dark"><i class="bi bi-eye-slash me-1"></i>@CL["RestrictSelected"]</button>
+                                <span class="small text-muted">@CL["RestrictProcessingHelp"]</span>
+                            </div>
+                        }
+                    </form>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Art. 18: restricted emails -->
+    <div class="card mb-3">
+        <div class="card-header bg-light"><i class="bi bi-eye-slash me-1"></i>@CL["RestrictedEmails"] <span class="badge bg-dark ms-1">@Model.Restricted.Count.ToString("N0")</span></div>
+        <div class="card-body">
+            <p class="small text-muted">@CL["RestrictedEmailsHelp"]</p>
+            @if (Model.Restricted.Count == 0)
+            {
+                <div class="text-muted small">@CL["NoRestrictedEmails"]</div>
+            }
+            else
+            {
+                <form asp-action="Restrict" method="post" id="release-form">
+                    <input type="hidden" name="restricted" value="false" />
+                    <input type="hidden" name="returnUrl" value="@here" />
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-2">
+                            <thead>
+                                <tr>
+                                    @if (Model.CanEdit) { <th style="width: 1%"><input type="checkbox" class="form-check-input" onclick="document.querySelectorAll('#release-form input[name=ids]').forEach(c => c.checked = this.checked)" /></th> }
+                                    <th>@CL["Date"]</th>
+                                    <th>@CL["Account"]</th>
+                                    <th>@CL["From"]</th>
+                                    <th>@CL["Subject"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var e in Model.Restricted)
+                                {
+                                    <tr>
+                                        @if (Model.CanEdit) { <td><input type="checkbox" class="form-check-input" name="ids" value="@e.Id" /></td> }
+                                        <td class="text-nowrap small">@e.SentDate.ToString("g")</td>
+                                        <td class="small">@e.Account</td>
+                                        <td class="small text-break">@e.From</td>
+                                        <td class="small"><a asp-controller="Emails" asp-action="Details" asp-route-id="@e.Id">@(string.IsNullOrWhiteSpace(e.Subject) ? "(–)" : e.Subject)</a></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    @if (Model.CanEdit)
+                    {
+                        <button type="submit" class="btn btn-sm btn-outline-dark"><i class="bi bi-eye me-1"></i>@CL["LiftRestrictionSelected"]</button>
+                    }
+                </form>
+            }
+        </div>
+    </div>
+</div>

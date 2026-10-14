@@ -24,7 +24,8 @@ namespace MailArchiver.ViewComponents
                 .Where(e => e.Id == emailId)
                 .Select(e => new
                 {
-                    e.Id, e.RetainUntil, e.LegalHold, AccountHold = e.MailAccount.LegalHold, e.OrganizationId
+                    e.Id, e.RetainUntil, e.LegalHold, AccountHold = e.MailAccount.LegalHold, e.OrganizationId,
+                    e.ProcessingRestricted, e.RestrictionReason, e.RestrictedAt
                 })
                 .FirstOrDefaultAsync();
             if (email == null)
@@ -50,7 +51,10 @@ namespace MailArchiver.ViewComponents
                 ChainHash = original?.ChainHash,
                 ArchivedAt = original?.ArchivedAt,
                 InWorm = original?.StorageKey != null,
-                CanSetHold = _authService.IsCurrentUserAdmin(HttpContext)
+                CanSetHold = _authService.IsCurrentUserAdmin(HttpContext),
+                ProcessingRestricted = email.ProcessingRestricted,
+                RestrictionReason = email.RestrictionReason,
+                RestrictedAt = email.RestrictedAt
             });
         }
     }
@@ -70,6 +74,9 @@ namespace MailArchiver.ViewComponents
         public DateTime? ArchivedAt { get; set; }
         public bool InWorm { get; set; }
         public bool CanSetHold { get; set; }
+        public bool ProcessingRestricted { get; set; }
+        public string? RestrictionReason { get; set; }
+        public DateTime? RestrictedAt { get; set; }
         public bool HasBytes => HasOriginal && Source != OriginalSources.LegacySeal;
     }
 }

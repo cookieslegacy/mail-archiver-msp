@@ -53,6 +53,14 @@ namespace MailArchiver.Models
         // Legal hold on this single email: never deleted while set.
         public bool LegalHold { get; set; }
 
+        /// <summary>
+        /// Restriction of processing (Art. 18 GDPR): the email stays archived but is hidden from
+        /// everyone except admins and auditors, and is left out of searches.
+        /// </summary>
+        public bool ProcessingRestricted { get; set; }
+        public string? RestrictionReason { get; set; }
+        public DateTime? RestrictedAt { get; set; }
+
         // The original message as received, with its place in the hash chain.
         public virtual ArchivedEmailOriginal? Original { get; set; }
 

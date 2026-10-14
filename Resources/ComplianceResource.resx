@@ -63,11 +63,17 @@
   <data name="AssignToOrganization" xml:space="preserve">
     <value>Assign</value>
   </data>
+  <data name="Attachments" xml:space="preserve">
+    <value>Attachments</value>
+  </data>
   <data name="AuditChain" xml:space="preserve">
     <value>Audit log chain</value>
   </data>
   <data name="AuditEntries" xml:space="preserve">
     <value>Audit entries</value>
+  </data>
+  <data name="AuditLogRetention" xml:space="preserve">
+    <value>Audit log retention</value>
   </data>
   <data name="Auditor" xml:space="preserve">
     <value>Auditor (read only)</value>
@@ -126,6 +132,15 @@
   <data name="Created" xml:space="preserve">
     <value>Created</value>
   </data>
+  <data name="DataProtection" xml:space="preserve">
+    <value>Data protection</value>
+  </data>
+  <data name="DataProtectionHelp" xml:space="preserve">
+    <value>Access requests (Art. 15 GDPR), restriction of processing (Art. 18) and the retention of the audit log. Deletion before the end of the legal retention period is not possible (Art. 17 (3) (b)).</value>
+  </data>
+  <data name="Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
   <data name="DefaultOrganizationStaysActive" xml:space="preserve">
     <value>The default organization cannot be deactivated.</value>
   </data>
@@ -153,11 +168,23 @@
   <data name="Email" xml:space="preserve">
     <value>Email</value>
   </data>
+  <data name="EmailAddressOfPerson" xml:space="preserve">
+    <value>Email address of the person</value>
+  </data>
   <data name="Emails" xml:space="preserve">
     <value>Emails</value>
   </data>
   <data name="EmailsInArchive" xml:space="preserve">
     <value>Emails in the archive</value>
+  </data>
+  <data name="EmailsNaming" xml:space="preserve">
+    <value>emails name {0}</value>
+  </data>
+  <data name="EmailsReleased" xml:space="preserve">
+    <value>Restriction lifted for {0} emails.</value>
+  </data>
+  <data name="EmailsRestricted" xml:space="preserve">
+    <value>Processing of {0} emails restricted.</value>
   </data>
   <data name="EnterSupport" xml:space="preserve">
     <value>Open for support</value>
@@ -167,6 +194,12 @@
   </data>
   <data name="ExportChain" xml:space="preserve">
     <value>Export chain (CSV)</value>
+  </data>
+  <data name="ExportEmlZip" xml:space="preserve">
+    <value>Export (EML, ZIP)</value>
+  </data>
+  <data name="ExportUnavailable" xml:space="preserve">
+    <value>The export service is not available.</value>
   </data>
   <data name="Failed" xml:space="preserve">
     <value>Failed</value>
@@ -179,6 +212,12 @@
   </data>
   <data name="FirstAdminHelp" xml:space="preserve">
     <value>The organization's own admin, who manages its users, mail accounts and retention. Leave empty to add admins later or let them sign in via OIDC.</value>
+  </data>
+  <data name="Forever" xml:space="preserve">
+    <value>forever</value>
+  </data>
+  <data name="From" xml:space="preserve">
+    <value>From</value>
   </data>
   <data name="FromPackage" xml:space="preserve">
     <value>from package</value>
@@ -197,6 +236,9 @@
   </data>
   <data name="Inactive" xml:space="preserve">
     <value>Inactive</value>
+  </data>
+  <data name="LastAuditPrune" xml:space="preserve">
+    <value>Last audit log pruning</value>
   </data>
   <data name="LastSync" xml:space="preserve">
     <value>Last sync</value>
@@ -230,6 +272,15 @@
   </data>
   <data name="LegalHoldSet" xml:space="preserve">
     <value>Legal hold set.</value>
+  </data>
+  <data name="LiftRestriction" xml:space="preserve">
+    <value>Lift restriction</value>
+  </data>
+  <data name="LiftRestrictionSelected" xml:space="preserve">
+    <value>Lift restriction for selected</value>
+  </data>
+  <data name="ListTruncated" xml:space="preserve">
+    <value>Only the newest {0} emails are listed; CSV and export contain all of them.</value>
   </data>
   <data name="MailAccountLimitReached" xml:space="preserve">
     <value>Your package does not include more mail accounts. Please ask your service provider to extend it.</value>
@@ -279,6 +330,9 @@
   <data name="NoAnchors" xml:space="preserve">
     <value>No anchors yet; they are created daily.</value>
   </data>
+  <data name="NoEmailsForAddress" xml:space="preserve">
+    <value>No emails name this address.</value>
+  </data>
   <data name="NoMailAccounts" xml:space="preserve">
     <value>No mail accounts.</value>
   </data>
@@ -294,6 +348,9 @@
   <data name="NoPackages" xml:space="preserve">
     <value>No packages yet.</value>
   </data>
+  <data name="NoRestrictedEmails" xml:space="preserve">
+    <value>No emails are restricted.</value>
+  </data>
   <data name="NotAllowed" xml:space="preserve">
     <value>not allowed</value>
   </data>
@@ -302,6 +359,9 @@
   </data>
   <data name="Notes" xml:space="preserve">
     <value>Notes</value>
+  </data>
+  <data name="OpenDataProtection" xml:space="preserve">
+    <value>Access requests and restrictions</value>
   </data>
   <data name="Organization" xml:space="preserve">
     <value>Organization</value>
@@ -342,6 +402,9 @@
   <data name="OverrideHelp" xml:space="preserve">
     <value>Leave empty to use the package's values. Storage counts the searchable copy of every email with its attachments plus the stored original.</value>
   </data>
+  <data name="OverviewCsv" xml:space="preserve">
+    <value>Overview (CSV)</value>
+  </data>
   <data name="Package" xml:space="preserve">
     <value>Package</value>
   </data>
@@ -377,6 +440,9 @@
   </data>
   <data name="ProblemsFound" xml:space="preserve">
     <value>Problems found</value>
+  </data>
+  <data name="ProcessingRestricted" xml:space="preserve">
+    <value>Processing restricted</value>
   </data>
   <data name="ProtectedEmailsKept" xml:space="preserve">
     <value>{0} emails are within their retention period or on legal hold and were kept.</value>
@@ -423,6 +489,27 @@
   <data name="ReleaseLegalHold" xml:space="preserve">
     <value>Release legal hold</value>
   </data>
+  <data name="RestrictProcessing" xml:space="preserve">
+    <value>Restrict processing</value>
+  </data>
+  <data name="RestrictProcessingHelp" xml:space="preserve">
+    <value>Art. 18 GDPR: the email stays archived (retention, hash chain), but only admins and auditors can still see it. Use this when a person objects or disputes the accuracy of the data and deletion is not possible yet.</value>
+  </data>
+  <data name="RestrictSelected" xml:space="preserve">
+    <value>Restrict selected</value>
+  </data>
+  <data name="RestrictedEmails" xml:space="preserve">
+    <value>Emails with restricted processing</value>
+  </data>
+  <data name="RestrictedEmailsHelp" xml:space="preserve">
+    <value>These emails stay archived until the end of their retention but are hidden from all users except admins and auditors and left out of searches (Art. 18 GDPR).</value>
+  </data>
+  <data name="RestrictionReasonPlaceholder" xml:space="preserve">
+    <value>Reason (e.g. objection of 2026-10-14, ticket no.)</value>
+  </data>
+  <data name="RestrictionReasonRequired" xml:space="preserve">
+    <value>Please give a reason for the restriction.</value>
+  </data>
   <data name="RetainUntil" xml:space="preserve">
     <value>Retained until</value>
   </data>
@@ -458,6 +545,9 @@
   </data>
   <data name="Save" xml:space="preserve">
     <value>Save</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Search</value>
   </data>
   <data name="SetLegalHold" xml:space="preserve">
     <value>Set legal hold</value>
@@ -522,6 +612,18 @@
   <data name="StorageQuotaOverride" xml:space="preserve">
     <value>Individual storage</value>
   </data>
+  <data name="Subject" xml:space="preserve">
+    <value>Subject</value>
+  </data>
+  <data name="SubjectAccessHelp" xml:space="preserve">
+    <value>Finds every email of this organization in which the address appears as sender or recipient, across all mail accounts. Each lookup is written to the audit log.</value>
+  </data>
+  <data name="SubjectAccessRequest" xml:space="preserve">
+    <value>Access request (Art. 15 GDPR)</value>
+  </data>
+  <data name="SubjectExportStarted" xml:space="preserve">
+    <value>Export of {0} emails started.</value>
+  </data>
   <data name="SupportAccess" xml:space="preserve">
     <value>Support access</value>
   </data>
@@ -542,6 +644,9 @@
   </data>
   <data name="SupportReasonRequired" xml:space="preserve">
     <value>Please give a reason for the support access.</value>
+  </data>
+  <data name="To" xml:space="preserve">
+    <value>To</value>
   </data>
   <data name="Type" xml:space="preserve">
     <value>Type</value>

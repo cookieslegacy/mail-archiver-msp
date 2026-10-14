@@ -90,8 +90,11 @@ Anmeldung: [Passwort + 2FA / OIDC über …].
 * Rechtsgrundlage der Archivierung: Art. 6 Abs. 1 lit. c DSGVO i. V. m. § 147 AO / § 257 HGB.
 * Löschkonzept: Löschung nach Fristablauf (Abschnitt 2.2); Löschnachweis in der Hash-Kette.
 * Auftragsverarbeitung: AV-Vertrag mit [Dienstleister] vom [Datum].
-* Betroffenenrechte: Auskunft über [Verfahren]; Löschbegehren werden gegen
-  Aufbewahrungspflichten abgewogen (Art. 17 Abs. 3 lit. b DSGVO).
+* Betroffenenrechte: Auskunft über *Compliance → Auskunft und Einschränkungen* (CSV und
+  EML-Export, protokolliert); Löschbegehren werden gegen Aufbewahrungspflichten abgewogen
+  (Art. 17 Abs. 3 lit. b DSGVO); Einschränkung der Verarbeitung (Art. 18) je E-Mail.
+* Löschfrist des Audit-Logs: [10] Jahre (`Compliance:AuditLogRetentionYears`).
+* Verzeichnis der Verarbeitungstätigkeiten und TOM: siehe `doc/Datenschutz.md`.
 
 ## 7. Anlagen
 

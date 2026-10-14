@@ -223,6 +223,20 @@ namespace MailArchiver.Services.Compliance
             var previousHash = IntegrityChain.GenesisHash;
             long lastSeq = 0;
 
+            // Entries pruned after their retention: the chain continues from the recorded cut.
+            var prune = await _context.AuditLogPrunes.AsNoTracking()
+                .Where(p => p.OrganizationId == organizationId)
+                .OrderByDescending(p => p.PrunedThroughSeq)
+                .FirstOrDefaultAsync(ct);
+            if (prune != null)
+            {
+                expectedSeq = prune.PrunedThroughSeq + 1;
+                previousHash = prune.PrunedThroughHash;
+                lastSeq = prune.PrunedThroughSeq;
+                report.Add("audit", prune.PrunedThroughSeq,
+                    $"{prune.EntriesRemoved} entries up to #{prune.PrunedThroughSeq} were pruned on {prune.PrunedAt:u} (older than {prune.OlderThan:d})");
+            }
+
             while (true)
             {
                 var batch = await _context.AccessLogs.AsNoTracking()
@@ -259,11 +273,26 @@ namespace MailArchiver.Services.Compliance
                 .Where(a => a.OrganizationId == organizationId)
                 .OrderBy(a => a.Id)
                 .ToListAsync(ct);
+            var prunedThrough = await _context.AuditLogPrunes.AsNoTracking()
+                .Where(p => p.OrganizationId == organizationId)
+                .OrderByDescending(p => p.PrunedThroughSeq)
+                .FirstOrDefaultAsync(ct);
 
             foreach (var anchor in anchors)
             {
                 run.AnchorsChecked++;
                 var ok = true;
+
+                // Anchors of pruned audit entries can only be checked against the prune record.
+                if (anchor.ChainKind == IntegrityChainKinds.Audit && prunedThrough != null && anchor.ChainSeq <= prunedThrough.PrunedThroughSeq)
+                {
+                    if (anchor.ChainSeq == prunedThrough.PrunedThroughSeq && anchor.ChainHash != prunedThrough.PrunedThroughHash)
+                    {
+                        report.Add("anchor", anchor.ChainSeq, $"The prune record does not match the audit anchor of {anchor.CreatedAt:u}");
+                        run.AnchorsFailed++;
+                    }
+                    continue;
+                }
 
                 string? chainHash = anchor.ChainKind == IntegrityChainKinds.Audit
                     ? await _context.AccessLogs.AsNoTracking()

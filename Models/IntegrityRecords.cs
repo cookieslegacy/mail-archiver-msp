@@ -1,6 +1,22 @@
 namespace MailArchiver.Models
 {
     /// <summary>One run of the archive integrity verification for an organization.</summary>
+    /// <summary>
+    /// Record of pruned audit log entries: everything up to <see cref="PrunedThroughSeq"/> was
+    /// removed after its retention; verification of the chain continues from this link.
+    /// </summary>
+    public class AuditLogPrune
+    {
+        public long Id { get; set; }
+        public int OrganizationId { get; set; }
+        public long PrunedThroughSeq { get; set; }
+        public string PrunedThroughHash { get; set; } = string.Empty;
+        public long EntriesRemoved { get; set; }
+        public DateTime OlderThan { get; set; }
+        public DateTime PrunedAt { get; set; }
+        public string PrunedBy { get; set; } = string.Empty;
+    }
+
     public class IntegrityCheckRun
     {
         public long Id { get; set; }

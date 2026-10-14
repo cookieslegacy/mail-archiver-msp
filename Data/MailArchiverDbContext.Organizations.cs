@@ -21,6 +21,7 @@ namespace MailArchiver.Data
         public DbSet<ArchivedEmailOriginal> ArchivedEmailOriginals { get; set; }
         public DbSet<IntegrityCheckRun> IntegrityCheckRuns { get; set; }
         public DbSet<IntegrityAnchor> IntegrityAnchors { get; set; }
+        public DbSet<AuditLogPrune> AuditLogPrunes { get; set; }
         public DbSet<Package> Packages { get; set; }
         public DbSet<MailAccountUsage> MailAccountUsages { get; set; }
         public DbSet<OrganizationUsageSnapshot> OrganizationUsageSnapshots { get; set; }
@@ -32,6 +33,7 @@ namespace MailArchiver.Data
         // on every query execution, so a context always filters by its current scope.
         private bool OrganizationFilterBypass => _organizationContext.IsSystem;
         private int OrganizationFilterId => _organizationContext.OrganizationId ?? -1;
+        private bool RestrictedVisible => _organizationContext.IsSystem || _organizationContext.CanSeeRestricted;
 
         // Users and API keys must be found before anyone is signed in (login, API key
         // authentication). Provider admins see the users of their own organization only; the
@@ -108,6 +110,8 @@ namespace MailArchiver.Data
             modelBuilder.Entity<ArchivedEmail>().Property(e => e.RetainUntil)
                 .HasColumnType("timestamp with time zone").ValueGeneratedOnAdd();
             modelBuilder.Entity<ArchivedEmail>().HasIndex(e => e.OrganizationId);
+            modelBuilder.Entity<ArchivedEmail>().Property(e => e.RestrictionReason).HasColumnType("text");
+            modelBuilder.Entity<ArchivedEmail>().Property(e => e.RestrictedAt).HasColumnType("timestamp with time zone");
             modelBuilder.Entity<EmailAttachment>().Property(a => a.OrganizationId).ValueGeneratedOnAdd();
             modelBuilder.Entity<AccessLog>().Property(a => a.OrganizationId).ValueGeneratedOnAdd();
             modelBuilder.Entity<AccessLog>().Property(a => a.ChainSeq).ValueGeneratedOnAdd();
@@ -152,6 +156,16 @@ namespace MailArchiver.Data
                     .OnDelete(DeleteBehavior.ClientNoAction);
             });
 
+            modelBuilder.Entity<AuditLogPrune>(b =>
+            {
+                b.ToTable("AuditLogPrunes", "mail_archiver");
+                b.Property(a => a.PrunedThroughHash).HasColumnType("char(64)");
+                b.Property(a => a.OlderThan).HasColumnType("timestamp with time zone");
+                b.Property(a => a.PrunedAt).HasColumnType("timestamp with time zone").ValueGeneratedOnAdd();
+                b.Property(a => a.PrunedBy).HasColumnType("text");
+                b.HasIndex(a => new { a.OrganizationId, a.PrunedThroughSeq });
+            });
+
             modelBuilder.Entity<IntegrityCheckRun>(b =>
             {
                 b.ToTable("IntegrityCheckRuns", "mail_archiver");
@@ -182,14 +196,18 @@ namespace MailArchiver.Data
             // ---------------------------------------------------------------
             modelBuilder.Entity<MailAccount>().HasQueryFilter(a =>
                 OrganizationFilterBypass || a.OrganizationId == OrganizationFilterId);
+            // Emails under restriction of processing (Art. 18 GDPR) are visible to admins and
+            // auditors only; system work (sync, retention, exports) sees them.
             modelBuilder.Entity<ArchivedEmail>().HasQueryFilter(e =>
-                OrganizationFilterBypass || e.OrganizationId == OrganizationFilterId);
+                OrganizationFilterBypass || (e.OrganizationId == OrganizationFilterId && (RestrictedVisible || !e.ProcessingRestricted)));
             modelBuilder.Entity<EmailAttachment>().HasQueryFilter(a =>
-                OrganizationFilterBypass || a.OrganizationId == OrganizationFilterId);
+                OrganizationFilterBypass || (a.OrganizationId == OrganizationFilterId && (RestrictedVisible || !a.ArchivedEmail.ProcessingRestricted)));
             modelBuilder.Entity<AttachmentContent>().HasQueryFilter(c =>
                 OrganizationFilterBypass || c.OrganizationId == OrganizationFilterId);
             modelBuilder.Entity<ArchivedEmailOriginal>().HasQueryFilter(o =>
                 OrganizationFilterBypass || o.OrganizationId == OrganizationFilterId);
+            modelBuilder.Entity<AuditLogPrune>().HasQueryFilter(a =>
+                OrganizationFilterBypass || a.OrganizationId == OrganizationFilterId);
             modelBuilder.Entity<IntegrityCheckRun>().HasQueryFilter(r =>
                 OrganizationFilterBypass || r.OrganizationId == OrganizationFilterId);
             modelBuilder.Entity<IntegrityAnchor>().HasQueryFilter(a =>

@@ -39,6 +39,7 @@ namespace MailArchiver.Services
             services.AddScoped<IntegrityVerificationService>();
             services.AddScoped<AnchorService>();
             services.AddScoped<RetentionService>();
+            services.AddScoped<DataProtectionService>();
             services.AddSingleton<IntegrityCheckQueue>();
             services.AddHttpClient(nameof(AnchorService), client => client.Timeout = TimeSpan.FromSeconds(30));
             services.AddHostedService<ComplianceBackgroundService>();

@@ -31,6 +31,7 @@ namespace MailArchiver.Services.Compliance
         private readonly IWormStore _worm;
         private readonly ILogger<ComplianceBackgroundService> _logger;
         private readonly Dictionary<int, DateTime> _lastPurge = new();
+        private DateTime _lastAuditPrune = DateTime.MinValue;
         private bool _backfillDone;
         // Highest email id checked for a missing original; new emails are checked as they come.
         private int _sealCursor;
@@ -170,6 +171,29 @@ namespace MailArchiver.Services.Compliance
                         await originals.DeleteStoredObjectsAsync(context, purgedEmailIds, ct);
                 }
                 _objectSweepFrom = sweepUntil.AddMinutes(-10);
+            }
+
+            // Audit log retention (GDPR): once a day, every organization's chain and the
+            // provider level chain (0).
+            if (_options.AuditLogRetentionYears > 0 && _lastAuditPrune < DateTime.UtcNow.AddHours(-24))
+            {
+                _lastAuditPrune = DateTime.UtcNow;
+                using var pruneScope = _scopeFactory.CreateScope();
+                var pruneContext = pruneScope.ServiceProvider.GetRequiredService<MailArchiverDbContext>();
+                var dataProtection = pruneScope.ServiceProvider.GetRequiredService<DataProtectionService>();
+                var chains = await pruneContext.Organizations.Select(o => o.Id).ToListAsync(ct);
+                chains.Add(0);
+                foreach (var chain in chains)
+                {
+                    try
+                    {
+                        await dataProtection.PruneAuditLogAsync(chain, "System", ct);
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    {
+                        _logger.LogError(ex, "Pruning the audit log of organization {OrganizationId} failed", chain);
+                    }
+                }
             }
 
             List<(int Id, bool AutoPurge)> organizations;

@@ -133,6 +133,7 @@ nav:
   - Mandanten & Revisionssicherheit (Fork):
       - Mandanten (Organisationen): Organizations.md
       - Revisionssichere Archivierung (GoBD): Compliance.md
+      - Datenschutz (DSGVO): Datenschutz.md
       - Vorlage Verfahrensdokumentation: Verfahrensdokumentation.md
   - Provider Guides:
       - Azure App Registration (M365): AZURE_APP_REGISTRATION_M365.md

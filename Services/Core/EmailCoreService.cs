@@ -238,6 +238,8 @@ namespace MailArchiver.Services.Core
             }
 
             // Organization: this search runs as raw SQL, which the EF query filters do not reach.
+            if (!_context.OrganizationScope.IsSystem && !_context.OrganizationScope.CanSeeRestricted)
+                whereConditions.Add(@"NOT ""ProcessingRestricted""");
             if (!_context.OrganizationScope.IsSystem)
             {
                 whereConditions.Add($@"""MailAccountId"" IN (SELECT oa.""Id"" FROM mail_archiver.""MailAccounts"" oa WHERE oa.""OrganizationId"" = @param{paramCounter})");

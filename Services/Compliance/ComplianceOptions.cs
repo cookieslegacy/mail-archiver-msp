@@ -59,5 +59,12 @@ namespace MailArchiver.Services.Compliance
 
         /// <summary>Seal emails archived before originals were kept (see IntegrityChain.LegacySeal).</summary>
         public bool SealLegacyEmails { get; set; } = true;
+
+        /// <summary>
+        /// Audit log entries older than this many years are pruned from the chain (a record of
+        /// the cut keeps the rest verifiable). 0 = keep forever. Should not be shorter than the
+        /// longest retention period of the archived emails.
+        /// </summary>
+        public int AuditLogRetentionYears { get; set; } = 10;
     }
 }

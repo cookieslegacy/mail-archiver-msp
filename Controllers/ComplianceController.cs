@@ -25,6 +25,8 @@ namespace MailArchiver.Controllers
         private readonly IWormStore _worm;
         private readonly IntegrityCheckQueue _queue;
         private readonly RetentionService _retention;
+        private readonly DataProtectionService _dataProtection;
+        private readonly ISelectedEmailsExportService? _selectedExport;
         private readonly IAuthenticationService _authService;
         private readonly IAccessLogService _accessLog;
         private readonly IServiceScopeFactory _scopeFactory;
@@ -33,9 +35,12 @@ namespace MailArchiver.Controllers
 
         public ComplianceController(MailArchiverDbContext context, IOrganizationContext scope, IOrganizationService organizations,
             IOriginalArchiveService originals, IWormStore worm, IntegrityCheckQueue queue, RetentionService retention,
-            IAuthenticationService authService, IAccessLogService accessLog, IServiceScopeFactory scopeFactory,
-            IStringLocalizer<ComplianceResource> localizer, ILogger<ComplianceController> logger)
+            DataProtectionService dataProtection, IAuthenticationService authService, IAccessLogService accessLog,
+            IServiceScopeFactory scopeFactory, IStringLocalizer<ComplianceResource> localizer,
+            ILogger<ComplianceController> logger, ISelectedEmailsExportService? selectedExport = null)
         {
+            _dataProtection = dataProtection;
+            _selectedExport = selectedExport;
             _context = context;
             _scope = scope;
             _organizations = organizations;
@@ -105,7 +110,12 @@ namespace MailArchiver.Controllers
                     .Select(a => new ComplianceAccountRow(a.Id, a.Name, a.EmailAddress, a.RetentionYears, a.LegalHold,
                         _context.ArchivedEmails.Count(e => e.MailAccountId == a.Id)))
                     .ToListAsync(),
-                WormEnabled = _worm.IsEnabled
+                WormEnabled = _worm.IsEnabled,
+                RestrictedEmails = await _context.ArchivedEmails.LongCountAsync(e => e.ProcessingRestricted),
+                LastAuditPrune = await _context.AuditLogPrunes.AsNoTracking()
+                    .OrderByDescending(p => p.PrunedThroughSeq).FirstOrDefaultAsync(),
+                AuditLogRetentionYears = HttpContext.RequestServices
+                    .GetRequiredService<Microsoft.Extensions.Options.IOptions<ComplianceOptions>>().Value.AuditLogRetentionYears
             };
             if (_worm.IsEnabled)
                 model.WormStatus = (await _worm.CheckAsync(HttpContext.RequestAborted)).Message;
@@ -266,6 +276,104 @@ namespace MailArchiver.Controllers
         /// The originals chain and the anchors as CSV, so an auditor can recompute every link with
         /// an independent tool (see docs/compliance.md for the canonical form).
         /// </summary>
+        // ---------------------------------------------------------------
+        // Data protection (GDPR)
+        // ---------------------------------------------------------------
+
+        /// <summary>Access request (Art. 15) and restricted emails (Art. 18) of the organization.</summary>
+        [AdminOrAuditorRequired]
+        public async Task<IActionResult> DataProtection(string? address)
+        {
+            if (_scope.OrganizationId is not int organizationId)
+                return NoOrganization();
+
+            var model = new DataProtectionViewModel
+            {
+                CanEdit = _authService.IsCurrentUserAdmin(HttpContext),
+                Restricted = await _dataProtection.RestrictedEmailsAsync(HttpContext.RequestAborted)
+            };
+            if (!string.IsNullOrWhiteSpace(address))
+            {
+                model.Result = await _dataProtection.FindEmailsOfAsync(address, HttpContext.RequestAborted);
+                await LogSubjectRequestAsync(organizationId, $"Access request lookup for {address.Trim()}: {model.Result.Total} emails");
+            }
+            return View(model);
+        }
+
+        /// <summary>CSV overview of all emails naming the address (Art. 15 Abs. 3).</summary>
+        [AdminOrAuditorRequired]
+        public async Task<IActionResult> SubjectAccessCsv(string address)
+        {
+            if (_scope.OrganizationId is not int organizationId || string.IsNullOrWhiteSpace(address))
+                return NotFound();
+            var result = await _dataProtection.FindEmailsOfAsync(address, HttpContext.RequestAborted);
+            await LogSubjectRequestAsync(organizationId, $"Access request overview (CSV) for {result.Address}: {result.Total} emails");
+            var name = string.Concat(result.Address.Where(c => char.IsLetterOrDigit(c) || c is '.' or '-' or '_' or '@'));
+            return File(DataProtectionService.OverviewCsv(result), "text/csv", $"access-request-{name}.csv");
+        }
+
+        /// <summary>Exports all emails naming the address as a ZIP of .eml files (Art. 15 Abs. 3, Art. 20).</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [AdminOrAuditorRequired]
+        public async Task<IActionResult> SubjectAccessExport(string address)
+        {
+            if (_scope.OrganizationId is not int organizationId || string.IsNullOrWhiteSpace(address))
+                return NotFound();
+            if (_selectedExport == null)
+            {
+                TempData["ErrorMessage"] = _l["ExportUnavailable"].Value;
+                return RedirectToAction(nameof(DataProtection), new { address });
+            }
+
+            // The export takes every match, not only the listed ones.
+            var ids = await _dataProtection.FindEmailIdsOfAsync(address, HttpContext.RequestAborted);
+            if (ids.Count == 0)
+            {
+                TempData["ErrorMessage"] = _l["NoEmailsForAddress"].Value;
+                return RedirectToAction(nameof(DataProtection), new { address });
+            }
+
+            await LogSubjectRequestAsync(organizationId, $"Access request export (EML) for {address.Trim()}: {ids.Count} emails");
+            var jobId = _selectedExport.QueueExport(ids, AccountExportFormat.EML, CurrentUser);
+            TempData["SuccessMessage"] = _l["SubjectExportStarted", ids.Count].Value;
+            return RedirectToAction("SelectedEmailsExportStatus", "Emails", new { jobId });
+        }
+
+        /// <summary>Restricts or releases the processing of emails (Art. 18).</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [AdminRequired]
+        public async Task<IActionResult> Restrict(List<int> ids, bool restricted, string? reason, string? returnUrl)
+        {
+            if (_scope.OrganizationId == null)
+                return NoOrganization();
+            if (restricted && string.IsNullOrWhiteSpace(reason))
+            {
+                TempData["ErrorMessage"] = _l["RestrictionReasonRequired"].Value;
+                return LocalRedirect(SafeReturnUrl(returnUrl));
+            }
+            var changed = await _dataProtection.SetRestrictionAsync(ids, restricted, reason?.Trim(), CurrentUser, HttpContext.RequestAborted);
+            TempData["SuccessMessage"] = (restricted ? _l["EmailsRestricted", changed] : _l["EmailsReleased", changed]).Value;
+            return LocalRedirect(SafeReturnUrl(returnUrl));
+        }
+
+        private string SafeReturnUrl(string? returnUrl) =>
+            !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl) ? returnUrl : Url.Action(nameof(DataProtection))!;
+
+        private async Task LogSubjectRequestAsync(int organizationId, string text)
+        {
+            _context.AccessLogs.Add(new AccessLog
+            {
+                Username = CurrentUser,
+                Type = AccessLogType.DataSubjectRequest,
+                Timestamp = DateTime.UtcNow,
+                OrganizationId = organizationId,
+                SearchParameters = text
+            });
+            await _context.SaveChangesAsync();
+        }
+
         [AdminOrAuditorRequired]
         public async Task<IActionResult> ChainExport()
         {
@@ -361,6 +469,13 @@ namespace MailArchiver.Controllers
 
     public record ComplianceAccountRow(int Id, string Name, string EmailAddress, int? RetentionYears, bool LegalHold, int Emails);
 
+    public class DataProtectionViewModel
+    {
+        public bool CanEdit { get; set; }
+        public SubjectAccessResult? Result { get; set; }
+        public List<SubjectEmailRow> Restricted { get; set; } = new();
+    }
+
     public class ComplianceViewModel
     {
         public Organization Organization { get; set; } = null!;
@@ -379,5 +494,8 @@ namespace MailArchiver.Controllers
         public List<ComplianceAccountRow> Accounts { get; set; } = new();
         public bool WormEnabled { get; set; }
         public string? WormStatus { get; set; }
+        public long RestrictedEmails { get; set; }
+        public AuditLogPrune? LastAuditPrune { get; set; }
+        public int AuditLogRetentionYears { get; set; }
     }
 }

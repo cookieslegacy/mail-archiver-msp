@@ -183,6 +183,37 @@
             </div>
         </div>
 
+        <!-- Data protection -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-person-lock me-1"></i>@CL["DataProtection"]</span>
+                    <a asp-action="DataProtection" class="btn btn-sm btn-outline-primary">@CL["OpenDataProtection"]</a>
+                </div>
+                <div class="card-body small">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="text-muted">@CL["RestrictedEmails"]</div>
+                            <div class="h5 mb-0">@Model.RestrictedEmails.ToString("N0")</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-muted">@CL["AuditLogRetention"]</div>
+                            <div class="h5 mb-0">@(Model.AuditLogRetentionYears > 0 ? CL["YearsValue", Model.AuditLogRetentionYears].Value : CL["Forever"].Value)</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-muted">@CL["LastAuditPrune"]</div>
+                            <div class="h5 mb-0">
+                                @if (Model.LastAuditPrune == null) { <span>–</span> }
+                                else { <span class="utc-timestamp" data-utc-time="@Utc(Model.LastAuditPrune.PrunedAt)">@Model.LastAuditPrune.PrunedAt.ToString("d")</span>
+                                       <span class="small text-muted">(#@Model.LastAuditPrune.PrunedThroughSeq, @Model.LastAuditPrune.EntriesRemoved.ToString("N0"))</span> }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-muted mt-2">@CL["DataProtectionHelp"]</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Integrity -->
         <div class="col-lg-6">
             <div class="card mb-3">

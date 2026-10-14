@@ -63,11 +63,17 @@
   <data name="AssignToOrganization" xml:space="preserve">
     <value>Zuordnen</value>
   </data>
+  <data name="Attachments" xml:space="preserve">
+    <value>Anhänge</value>
+  </data>
   <data name="AuditChain" xml:space="preserve">
     <value>Kette des Audit-Logs</value>
   </data>
   <data name="AuditEntries" xml:space="preserve">
     <value>Audit-Einträge</value>
+  </data>
+  <data name="AuditLogRetention" xml:space="preserve">
+    <value>Löschfrist Audit-Log</value>
   </data>
   <data name="Auditor" xml:space="preserve">
     <value>Prüfer (nur lesen)</value>
@@ -126,6 +132,15 @@
   <data name="Created" xml:space="preserve">
     <value>Erstellt</value>
   </data>
+  <data name="DataProtection" xml:space="preserve">
+    <value>Datenschutz</value>
+  </data>
+  <data name="DataProtectionHelp" xml:space="preserve">
+    <value>Betroffenenauskunft (Art. 15 DSGVO), Einschränkung der Verarbeitung (Art. 18) und die Löschfrist des Audit-Logs. Eine Löschung vor Ablauf der gesetzlichen Aufbewahrungsfrist ist nicht möglich (Art. 17 Abs. 3 lit. b).</value>
+  </data>
+  <data name="Date" xml:space="preserve">
+    <value>Datum</value>
+  </data>
   <data name="DefaultOrganizationStaysActive" xml:space="preserve">
     <value>Die Standard-Organisation kann nicht deaktiviert werden.</value>
   </data>
@@ -153,11 +168,23 @@
   <data name="Email" xml:space="preserve">
     <value>E-Mail</value>
   </data>
+  <data name="EmailAddressOfPerson" xml:space="preserve">
+    <value>E-Mail-Adresse der Person</value>
+  </data>
   <data name="Emails" xml:space="preserve">
     <value>E-Mails</value>
   </data>
   <data name="EmailsInArchive" xml:space="preserve">
     <value>E-Mails im Archiv</value>
+  </data>
+  <data name="EmailsNaming" xml:space="preserve">
+    <value>E-Mails nennen {0}</value>
+  </data>
+  <data name="EmailsReleased" xml:space="preserve">
+    <value>Einschränkung für {0} E-Mails aufgehoben.</value>
+  </data>
+  <data name="EmailsRestricted" xml:space="preserve">
+    <value>Verarbeitung von {0} E-Mails eingeschränkt.</value>
   </data>
   <data name="EnterSupport" xml:space="preserve">
     <value>Für Support öffnen</value>
@@ -167,6 +194,12 @@
   </data>
   <data name="ExportChain" xml:space="preserve">
     <value>Kette exportieren (CSV)</value>
+  </data>
+  <data name="ExportEmlZip" xml:space="preserve">
+    <value>Export (EML, ZIP)</value>
+  </data>
+  <data name="ExportUnavailable" xml:space="preserve">
+    <value>Der Export-Dienst steht nicht zur Verfügung.</value>
   </data>
   <data name="Failed" xml:space="preserve">
     <value>Fehlerhaft</value>
@@ -179,6 +212,12 @@
   </data>
   <data name="FirstAdminHelp" xml:space="preserve">
     <value>Der eigene Admin der Organisation, der Benutzer, Postfächer und Aufbewahrung verwaltet. Leer lassen, um Admins später anzulegen oder per OIDC anzumelden.</value>
+  </data>
+  <data name="Forever" xml:space="preserve">
+    <value>unbegrenzt</value>
+  </data>
+  <data name="From" xml:space="preserve">
+    <value>Von</value>
   </data>
   <data name="FromPackage" xml:space="preserve">
     <value>laut Paket</value>
@@ -197,6 +236,9 @@
   </data>
   <data name="Inactive" xml:space="preserve">
     <value>Inaktiv</value>
+  </data>
+  <data name="LastAuditPrune" xml:space="preserve">
+    <value>Letzte Bereinigung des Audit-Logs</value>
   </data>
   <data name="LastSync" xml:space="preserve">
     <value>Letzte Synchronisation</value>
@@ -230,6 +272,15 @@
   </data>
   <data name="LegalHoldSet" xml:space="preserve">
     <value>Legal Hold gesetzt.</value>
+  </data>
+  <data name="LiftRestriction" xml:space="preserve">
+    <value>Einschränkung aufheben</value>
+  </data>
+  <data name="LiftRestrictionSelected" xml:space="preserve">
+    <value>Einschränkung für ausgewählte aufheben</value>
+  </data>
+  <data name="ListTruncated" xml:space="preserve">
+    <value>Es werden nur die neuesten {0} E-Mails angezeigt; CSV und Export enthalten alle.</value>
   </data>
   <data name="MailAccountLimitReached" xml:space="preserve">
     <value>Ihr Paket enthält keine weiteren Postfächer. Bitte wenden Sie sich an Ihren Dienstleister, um es zu erweitern.</value>
@@ -279,6 +330,9 @@
   <data name="NoAnchors" xml:space="preserve">
     <value>Noch keine Anker; sie werden täglich erzeugt.</value>
   </data>
+  <data name="NoEmailsForAddress" xml:space="preserve">
+    <value>Keine E-Mails nennen diese Adresse.</value>
+  </data>
   <data name="NoMailAccounts" xml:space="preserve">
     <value>Keine Postfächer.</value>
   </data>
@@ -294,6 +348,9 @@
   <data name="NoPackages" xml:space="preserve">
     <value>Noch keine Pakete.</value>
   </data>
+  <data name="NoRestrictedEmails" xml:space="preserve">
+    <value>Keine E-Mails eingeschränkt.</value>
+  </data>
   <data name="NotAllowed" xml:space="preserve">
     <value>nicht erlaubt</value>
   </data>
@@ -302,6 +359,9 @@
   </data>
   <data name="Notes" xml:space="preserve">
     <value>Notizen</value>
+  </data>
+  <data name="OpenDataProtection" xml:space="preserve">
+    <value>Auskunft und Einschränkungen</value>
   </data>
   <data name="Organization" xml:space="preserve">
     <value>Organisation</value>
@@ -342,6 +402,9 @@
   <data name="OverrideHelp" xml:space="preserve">
     <value>Leer lassen, um die Werte des Pakets zu verwenden. Zum Speicher zählen die durchsuchbare Kopie jeder E-Mail mit Anhängen und das gespeicherte Original.</value>
   </data>
+  <data name="OverviewCsv" xml:space="preserve">
+    <value>Übersicht (CSV)</value>
+  </data>
   <data name="Package" xml:space="preserve">
     <value>Paket</value>
   </data>
@@ -377,6 +440,9 @@
   </data>
   <data name="ProblemsFound" xml:space="preserve">
     <value>Gefundene Probleme</value>
+  </data>
+  <data name="ProcessingRestricted" xml:space="preserve">
+    <value>Verarbeitung eingeschränkt</value>
   </data>
   <data name="ProtectedEmailsKept" xml:space="preserve">
     <value>{0} E-Mails befinden sich in der Aufbewahrungsfrist oder unter Legal Hold und wurden beibehalten.</value>
@@ -423,6 +489,27 @@
   <data name="ReleaseLegalHold" xml:space="preserve">
     <value>Legal Hold aufheben</value>
   </data>
+  <data name="RestrictProcessing" xml:space="preserve">
+    <value>Verarbeitung einschränken</value>
+  </data>
+  <data name="RestrictProcessingHelp" xml:space="preserve">
+    <value>Art. 18 DSGVO: Die E-Mail bleibt archiviert (Frist, Hash-Kette), aber nur Admins und Prüfer sehen sie noch. Für Widersprüche oder bestrittene Richtigkeit, solange eine Löschung noch nicht möglich ist.</value>
+  </data>
+  <data name="RestrictSelected" xml:space="preserve">
+    <value>Ausgewählte einschränken</value>
+  </data>
+  <data name="RestrictedEmails" xml:space="preserve">
+    <value>E-Mails mit eingeschränkter Verarbeitung</value>
+  </data>
+  <data name="RestrictedEmailsHelp" xml:space="preserve">
+    <value>Diese E-Mails bleiben bis zum Ende ihrer Aufbewahrungsfrist archiviert, sind aber für alle Benutzer außer Admins und Prüfern unsichtbar und von der Suche ausgenommen (Art. 18 DSGVO).</value>
+  </data>
+  <data name="RestrictionReasonPlaceholder" xml:space="preserve">
+    <value>Grund (z. B. Widerspruch vom 14.10.2026, Ticketnr.)</value>
+  </data>
+  <data name="RestrictionReasonRequired" xml:space="preserve">
+    <value>Bitte einen Grund für die Einschränkung angeben.</value>
+  </data>
   <data name="RetainUntil" xml:space="preserve">
     <value>Aufbewahren bis</value>
   </data>
@@ -458,6 +545,9 @@
   </data>
   <data name="Save" xml:space="preserve">
     <value>Speichern</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Suchen</value>
   </data>
   <data name="SetLegalHold" xml:space="preserve">
     <value>Legal Hold setzen</value>
@@ -522,6 +612,18 @@
   <data name="StorageQuotaOverride" xml:space="preserve">
     <value>Individueller Speicher</value>
   </data>
+  <data name="Subject" xml:space="preserve">
+    <value>Betreff</value>
+  </data>
+  <data name="SubjectAccessHelp" xml:space="preserve">
+    <value>Findet alle E-Mails dieser Organisation, in denen die Adresse als Absender oder Empfänger vorkommt, über alle Postfächer hinweg. Jede Abfrage wird im Audit-Log protokolliert.</value>
+  </data>
+  <data name="SubjectAccessRequest" xml:space="preserve">
+    <value>Betroffenenauskunft (Art. 15 DSGVO)</value>
+  </data>
+  <data name="SubjectExportStarted" xml:space="preserve">
+    <value>Export von {0} E-Mails gestartet.</value>
+  </data>
   <data name="SupportAccess" xml:space="preserve">
     <value>Support-Zugriff</value>
   </data>
@@ -542,6 +644,9 @@
   </data>
   <data name="SupportReasonRequired" xml:space="preserve">
     <value>Bitte eine Begründung für den Support-Zugriff angeben.</value>
+  </data>
+  <data name="To" xml:space="preserve">
+    <value>An</value>
   </data>
   <data name="Type" xml:space="preserve">
     <value>Typ</value>
