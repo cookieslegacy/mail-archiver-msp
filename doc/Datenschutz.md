@@ -92,7 +92,7 @@ WORM-Speicher und Zeitstempel, Backup-Anleitung des Originals.
 
 | Pflicht | Wer | Hilfe |
 |---|---|---|
-| AV-Vertrag je Kunde (Art. 28) | Dienstleister | Anlage: [TOM-Liste unten](#anlage-technische-und-organisatorische-massnahmen-tom) |
+| AV-Vertrag je Kunde (Art. 28) | Dienstleister | Anlage: [TOM-Liste unten](#anlage-technische-und-organisatorische-manahmen-tom) |
 | Verzeichnis der Verarbeitungstätigkeiten (Art. 30) | Kunde und Dienstleister | [Vorlage unten](#anlage-eintrag-im-verzeichnis-der-verarbeitungstatigkeiten) |
 | Information der Beschäftigten (Art. 13) | Kunde | Hinweis auf Archivierung, Frist, Zugriffsberechtigte, Umgang mit privaten E-Mails |
 | Regelung privater E-Mail-Nutzung | Kunde | Verbot oder Trennung; sonst Mitbestimmung/Einwilligung prüfen |
