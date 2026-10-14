@@ -54,6 +54,12 @@
   <data name="ArchivedAt" xml:space="preserve">
     <value>Archiviert</value>
   </data>
+  <data name="ArchivingPaused" xml:space="preserve">
+    <value>Archivierung angehalten</value>
+  </data>
+  <data name="ArchivingPausedQuota" xml:space="preserve">
+    <value>Der Speicher Ihres Pakets ist aufgebraucht. Die Archivierung ist angehalten, bis das Paket erweitert wird.</value>
+  </data>
   <data name="AssignToOrganization" xml:space="preserve">
     <value>Zuordnen</value>
   </data>
@@ -108,6 +114,9 @@
   <data name="Compliance" xml:space="preserve">
     <value>Compliance</value>
   </data>
+  <data name="ConfirmDeletePackage" xml:space="preserve">
+    <value>Dieses Paket löschen?</value>
+  </data>
   <data name="Create" xml:space="preserve">
     <value>Anlegen</value>
   </data>
@@ -125,6 +134,9 @@
   </data>
   <data name="DeleteRefusedRetention" xml:space="preserve">
     <value>Die E-Mail befindet sich noch in der gesetzlichen Aufbewahrungsfrist und kann nicht gelöscht werden.</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Beschreibung</value>
   </data>
   <data name="Detail" xml:space="preserve">
     <value>Detail</value>
@@ -168,6 +180,9 @@
   <data name="FirstAdminHelp" xml:space="preserve">
     <value>Der eigene Admin der Organisation, der Benutzer, Postfächer und Aufbewahrung verwaltet. Leer lassen, um Admins später anzulegen oder per OIDC anzumelden.</value>
   </data>
+  <data name="FromPackage" xml:space="preserve">
+    <value>laut Paket</value>
+  </data>
   <data name="HashChains" xml:space="preserve">
     <value>Hash-Ketten</value>
   </data>
@@ -183,8 +198,14 @@
   <data name="Inactive" xml:space="preserve">
     <value>Inaktiv</value>
   </data>
+  <data name="LastSync" xml:space="preserve">
+    <value>Letzte Synchronisation</value>
+  </data>
   <data name="LastVerification" xml:space="preserve">
     <value>Letzte Prüfung</value>
+  </data>
+  <data name="LeaveManagement" xml:space="preserve">
+    <value>Verwaltung beenden</value>
   </data>
   <data name="LeaveSupport" xml:space="preserve">
     <value>Support-Zugriff beenden</value>
@@ -210,8 +231,29 @@
   <data name="LegalHoldSet" xml:space="preserve">
     <value>Legal Hold gesetzt.</value>
   </data>
+  <data name="MailAccountLimitReached" xml:space="preserve">
+    <value>Ihr Paket enthält keine weiteren Postfächer. Bitte wenden Sie sich an Ihren Dienstleister, um es zu erweitern.</value>
+  </data>
   <data name="MailAccounts" xml:space="preserve">
     <value>Postfächer</value>
+  </data>
+  <data name="ManageMailAccounts" xml:space="preserve">
+    <value>Postfächer verwalten</value>
+  </data>
+  <data name="ManageMailAccountsHelp" xml:space="preserve">
+    <value>Postfächer dieser Organisation anlegen, bearbeiten, synchronisieren und importieren. E-Mail-Inhalte bleiben gesperrt; jede Änderung wird im Audit-Log der Organisation protokolliert.</value>
+  </data>
+  <data name="ManagementAccessActive" xml:space="preserve">
+    <value>Sie verwalten die Postfächer von {0}. E-Mail-Inhalte sind nicht zugänglich; Ihre Änderungen werden im Audit-Log der Organisation protokolliert.</value>
+  </data>
+  <data name="ManagementPageClosed" xml:space="preserve">
+    <value>Diese Seite zeigt E-Mail-Inhalte und ist im Verwaltungsmodus gesperrt. Dafür gibt es den Support-Zugriff, den die Organisation freigeben muss.</value>
+  </data>
+  <data name="MaxMailAccounts" xml:space="preserve">
+    <value>Postfächer</value>
+  </data>
+  <data name="MaxMailAccountsOverride" xml:space="preserve">
+    <value>Individuelle Postfächer</value>
   </data>
   <data name="Name" xml:space="preserve">
     <value>Name</value>
@@ -225,6 +267,9 @@
   <data name="NewOrganization" xml:space="preserve">
     <value>Neue Organisation</value>
   </data>
+  <data name="NewPackage" xml:space="preserve">
+    <value>Neues Paket</value>
+  </data>
   <data name="No" xml:space="preserve">
     <value>nein</value>
   </data>
@@ -234,11 +279,20 @@
   <data name="NoAnchors" xml:space="preserve">
     <value>Noch keine Anker; sie werden täglich erzeugt.</value>
   </data>
+  <data name="NoMailAccounts" xml:space="preserve">
+    <value>Keine Postfächer.</value>
+  </data>
   <data name="NoOrganization" xml:space="preserve">
     <value>Ihr Benutzer gehört zu keiner Organisation.</value>
   </data>
   <data name="NoOriginalLegacy" xml:space="preserve">
     <value>Diese E-Mail wurde archiviert, bevor Originale gespeichert wurden; sie ist versiegelt, eine Originaldatei gibt es nicht.</value>
+  </data>
+  <data name="NoPackage" xml:space="preserve">
+    <value>Kein Paket (unbegrenzt)</value>
+  </data>
+  <data name="NoPackages" xml:space="preserve">
+    <value>Noch keine Pakete.</value>
   </data>
   <data name="NotAllowed" xml:space="preserve">
     <value>nicht erlaubt</value>
@@ -282,6 +336,39 @@
   <data name="OriginalsChain" xml:space="preserve">
     <value>Kette der Originale</value>
   </data>
+  <data name="OriginalsShare" xml:space="preserve">
+    <value>davon Originale</value>
+  </data>
+  <data name="OverrideHelp" xml:space="preserve">
+    <value>Leer lassen, um die Werte des Pakets zu verwenden. Zum Speicher zählen die durchsuchbare Kopie jeder E-Mail mit Anhängen und das gespeicherte Original.</value>
+  </data>
+  <data name="Package" xml:space="preserve">
+    <value>Paket</value>
+  </data>
+  <data name="PackageActiveHelp" xml:space="preserve">
+    <value>Aktiv (inaktive Pakete können nicht mehr gebucht werden; bestehende Buchungen bleiben)</value>
+  </data>
+  <data name="PackageAndStorage" xml:space="preserve">
+    <value>Paket und Speicher</value>
+  </data>
+  <data name="PackageDeleted" xml:space="preserve">
+    <value>Paket gelöscht.</value>
+  </data>
+  <data name="PackageInUse" xml:space="preserve">
+    <value>Das Paket ist von Organisationen gebucht und kann nicht gelöscht werden. Deaktivieren Sie es stattdessen.</value>
+  </data>
+  <data name="PackageNameTaken" xml:space="preserve">
+    <value>Ein Paket mit diesem Namen gibt es bereits.</value>
+  </data>
+  <data name="PackageSaved" xml:space="preserve">
+    <value>Paket gespeichert.</value>
+  </data>
+  <data name="Packages" xml:space="preserve">
+    <value>Pakete</value>
+  </data>
+  <data name="PackagesIntro" xml:space="preserve">
+    <value>Pakete legen fest, was Sie verkaufen: Speicher und Anzahl der Postfächer. Ein Paket wird auf der Seite der Organisation zugewiesen; dort eingetragene Einzelwerte haben Vorrang vor dem Paket.</value>
+  </data>
   <data name="Password" xml:space="preserve">
     <value>Passwort</value>
   </data>
@@ -305,6 +392,30 @@
   </data>
   <data name="PurgedExpired" xml:space="preserve">
     <value>{0} E-Mails mit abgelaufener Frist wurden gelöscht.</value>
+  </data>
+  <data name="QuotaBannerBlocked" xml:space="preserve">
+    <value>Der Speicher Ihres Pakets ist aufgebraucht, die Archivierung ist angehalten. Bitte wenden Sie sich an Ihren Dienstleister, um das Paket zu erweitern.</value>
+  </data>
+  <data name="QuotaBannerExceeded" xml:space="preserve">
+    <value>Der Speicher Ihres Pakets ist aufgebraucht. Bitte wenden Sie sich an Ihren Dienstleister, um es zu erweitern.</value>
+  </data>
+  <data name="QuotaBannerMailAccounts" xml:space="preserve">
+    <value>Alle {0} Postfächer Ihres Pakets sind belegt.</value>
+  </data>
+  <data name="QuotaBannerWarning" xml:space="preserve">
+    <value>{0} % des Speichers Ihres Pakets sind belegt.</value>
+  </data>
+  <data name="QuotaBlock" xml:space="preserve">
+    <value>Archivierung anhalten</value>
+  </data>
+  <data name="QuotaBlockHelp" xml:space="preserve">
+    <value>Angehalten wird erst, wenn das Kontingent um die Toleranz überschritten ist (Quota:BlockGracePercent, Standard 10 %). Was in der Zwischenzeit eingeht, wird nach der Erweiterung nachgeholt, solange es noch auf dem Mailserver liegt. Für aufbewahrungspflichtige E-Mails ist „Nur warnen“ die sicherere Wahl.</value>
+  </data>
+  <data name="QuotaMustBePositive" xml:space="preserve">
+    <value>Grenzen dürfen nicht negativ sein.</value>
+  </data>
+  <data name="QuotaWarnOnly" xml:space="preserve">
+    <value>Nur warnen, weiter archivieren</value>
   </data>
   <data name="Reason" xml:space="preserve">
     <value>Grund</value>
@@ -408,6 +519,9 @@
   <data name="Storage" xml:space="preserve">
     <value>Speicher</value>
   </data>
+  <data name="StorageQuotaOverride" xml:space="preserve">
+    <value>Individueller Speicher</value>
+  </data>
   <data name="SupportAccess" xml:space="preserve">
     <value>Support-Zugriff</value>
   </data>
@@ -429,11 +543,23 @@
   <data name="SupportReasonRequired" xml:space="preserve">
     <value>Bitte eine Begründung für den Support-Zugriff angeben.</value>
   </data>
+  <data name="Type" xml:space="preserve">
+    <value>Typ</value>
+  </data>
   <data name="UnassignedUsers" xml:space="preserve">
     <value>Benutzer ohne Organisation</value>
   </data>
   <data name="UnassignedUsersHelp" xml:space="preserve">
     <value>Neue OIDC-Benutzer, deren Mail-Domain keiner Organisation gehört, warten hier und sehen nichts, bis sie zugeordnet sind.</value>
+  </data>
+  <data name="Unlimited" xml:space="preserve">
+    <value>unbegrenzt</value>
+  </data>
+  <data name="UsageExport" xml:space="preserve">
+    <value>Verbrauch (CSV)</value>
+  </data>
+  <data name="UsageExportHelp" xml:space="preserve">
+    <value>Speicher aller Organisationen im laufenden Monat: Spitze, Durchschnitt und letzter Wert der täglichen Messungen, für die Abrechnung.</value>
   </data>
   <data name="UserAssigned" xml:space="preserve">
     <value>Benutzer {0} zugeordnet.</value>
@@ -458,6 +584,9 @@
   </data>
   <data name="Verifications" xml:space="preserve">
     <value>Integritätsprüfungen</value>
+  </data>
+  <data name="WhenQuotaExceeded" xml:space="preserve">
+    <value>Wenn der Speicher voll ist</value>
   </data>
   <data name="WithOriginal" xml:space="preserve">
     <value>mit Original</value>

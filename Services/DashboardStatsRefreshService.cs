@@ -249,7 +249,8 @@ namespace MailArchiver.Services
                     new MailArchiver.Services.Organizations.FixedOrganizationContext(organizationId));
 
                 var model = await Task.Run(() => emailCoreService.BuildAdminStatistics(scoped, _ => false), cancellationToken);
-                var storageBytes = await scoped.AccountStorageCaches.SumAsync(c => (long?)c.TotalBytes, cancellationToken) ?? 0;
+                var storageBytes = (await MailArchiver.Services.Organizations.StorageUsage.ForOrganizationsAsync(scoped))
+                    .GetValueOrDefault(organizationId).Total;
                 var key = MailArchiver.Services.Organizations.DashboardScope.OrganizationKey(organizationId);
 
                 var row = await system.DashboardStatsCaches.FirstOrDefaultAsync(c => c.Key == key, cancellationToken);

@@ -45,6 +45,15 @@ namespace MailArchiver.Controllers
                 ? await _emailCoreService.GetDashboardStatisticsAsync(LastRunHadIssues)
                 : await CreateCustomDashboardStatisticsAsync(accountScope);
 
+            // A user sees the storage of the mail accounts assigned to them, not the
+            // organization's (fork: organizations).
+            if (accountScope != null)
+            {
+                var ownBytes = await MailArchiver.Services.Organizations.StorageUsage.ForAccountsAsync(
+                    HttpContext.RequestServices.GetRequiredService<MailArchiver.Data.MailArchiverDbContext>(), accountScope);
+                model.TotalStorageUsed = AccountStorageService.FormatFileSize(ownBytes.Values.Sum());
+            }
+
             // Speicherverbrauch pro Account befuellen (aus Cache)
             if (model.EmailsPerAccount != null && model.EmailsPerAccount.Count > 0)
             {

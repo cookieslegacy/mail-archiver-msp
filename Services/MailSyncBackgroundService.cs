@@ -408,6 +408,11 @@ namespace MailArchiver.Services
                     }
                 }
 
+                // Storage quota of the organization's package (fork: organizations).
+                if (await accountServices.GetRequiredService<MailArchiver.Services.Organizations.IQuotaService>()
+                        .IsArchivingBlockedAsync(account.Id, ct))
+                    return;
+
                 // A non-positive timeout means "no timeout": the source is still
                 // created so a manual cancel from the UI has something to fire, it
                 // just never trips on its own.

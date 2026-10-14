@@ -17,6 +17,8 @@ Dieser Fork von [s1t5/mail-archiver](https://github.com/s1t5/mail-archiver) erg�
 
 Die Erweiterung liegt weitgehend in eigenen Dateien (`*/Organizations/*`, `*/Compliance/*`,
 `Migrations/*MigrateFork_*`, `Resources/ComplianceResource*`, eigene Controller und Views).
+Die Pakete/Kontingente (`MigrateFork_5`, `Services/Organizations/QuotaService.cs`) hängen
+sich mit je einer Zeile in Synchronisation, Importe, Dashboard und Speicheranzeige ein.
 In Dateien des Originals sind die Eingriffe klein und kommentiert.
 
 ```bash
@@ -43,7 +45,14 @@ Worauf beim Mergen zu achten ist:
   (sonst werden die E-Mails nur nachträglich versiegelt).
 * **Neue Löschwege** werden von der Datenbank geprüft; die Oberfläche sollte `MA001`/`MA002`
   über `RetentionGuard.Describe` verständlich melden.
+* **Neue Seiten, die E-Mail-Inhalte zeigen oder herausgeben**, bleiben im Verwaltungsmodus
+  des Providers automatisch gesperrt – nur Controller/Aktionen in der Liste `Open` in
+  `Services/Organizations/ProviderManagementFilter.cs` sind offen. Eine neue reine
+  Verwaltungsseite muss dort eingetragen werden.
+* **Neue Wege, Postfächer anzulegen**, prüft die Datenbank gegen das Paket (`MA004`); die
+  Oberfläche meldet das über `QuotaService.IsMailAccountLimitError`. **Neue Wege, E-Mails
+  zu holen oder zu importieren**, fragen vorher `QuotaGuard.ArchivingBlockedMessageAsync`.
 * Danach: `dotnet test` (die Tests unter `tests/MailArchiver.Tests/Compliance` prüfen
-  Trennung, Ketten, Fristen und Manipulationserkennung).
+  Trennung, Ketten, Fristen, Kontingente und Manipulationserkennung).
 
 Lizenz: GPL-3.0 wie das Original.

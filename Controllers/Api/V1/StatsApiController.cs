@@ -62,7 +62,8 @@ public class StatsApiController : ApiControllerBase
     {
         // An organization admin sees the organization's storage, not the whole database.
         if (!_context.OrganizationScope.IsSystem)
-            return (await _context.AccountStorageCaches.SumAsync(c => (long?)c.TotalBytes) ?? 0) / (1024L * 1024L);
+            return (await MailArchiver.Services.Organizations.StorageUsage.ForOrganizationsAsync(_context))
+                .Values.Sum(v => v.Total) / (1024L * 1024L);
 
         try
         {

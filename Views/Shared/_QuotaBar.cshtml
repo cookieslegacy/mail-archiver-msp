@@ -1,0 +1,35 @@
+@model MailArchiver.Services.Organizations.QuotaStatus?
+@using MailArchiver.Services.Organizations
+@{
+    string Size(long bytes) => bytes >= 1L << 30 ? $"{bytes / (double)(1L << 30):N1} GB" : $"{bytes / (double)(1L << 20):N1} MB";
+}
+@if (Model == null)
+{
+    <span class="text-muted">–</span>
+}
+else if (Model.QuotaBytes is long quota)
+{
+    var percent = Model.Percent ?? 0;
+    var color = Model.Level switch
+    {
+        QuotaLevel.Blocked => "bg-danger",
+        QuotaLevel.Exceeded => "bg-danger",
+        QuotaLevel.Warning => "bg-warning",
+        _ => "bg-success"
+    };
+    <div class="small d-flex justify-content-between">
+        <span>@Size(Model.UsedBytes) / @Size(quota)</span>
+        <span class="@(Model.Level >= QuotaLevel.Exceeded ? "text-danger fw-semibold" : "text-muted")">@percent.ToString("N0") %</span>
+    </div>
+    <div class="progress" style="height: 6px">
+        <div class="progress-bar @color" role="progressbar" style="width: @(Math.Min(100, percent).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></div>
+    </div>
+    @if (Model.Level == QuotaLevel.Blocked)
+    {
+        <div class="small text-danger"><i class="bi bi-pause-circle me-1"></i>@CL["ArchivingPaused"]</div>
+    }
+}
+else
+{
+    <span class="small">@Size(Model.UsedBytes)</span>
+}

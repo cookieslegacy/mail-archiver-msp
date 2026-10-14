@@ -19,6 +19,11 @@ namespace MailArchiver.Services
             services.AddScoped<IOrganizationContext, HttpOrganizationContext>();
             services.AddSingleton<OrganizationConnectionInterceptor>();
             services.AddScoped<IOrganizationService, OrganizationService>();
+            services.Configure<QuotaOptions>(builder.Configuration.GetSection(QuotaOptions.SectionName));
+            services.AddMemoryCache();
+            services.AddScoped<IQuotaService, QuotaService>();
+            services.AddHostedService<UsageSnapshotService>();
+            services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(o => o.Filters.Add<ProviderManagementFilter>());
 
             services.Configure<ArchiveStorageOptions>(builder.Configuration.GetSection(ArchiveStorageOptions.SectionName));
             services.Configure<ComplianceOptions>(builder.Configuration.GetSection(ComplianceOptions.SectionName));

@@ -1,0 +1,59 @@
+@model MailArchiver.Controllers.PackageViewModel
+@{
+    ViewData["Title"] = Model.Id == 0 ? CL["NewPackage"] : Model.Name;
+}
+<div class="container" style="max-width: 720px">
+    <h1 class="h3 mb-3"><i class="bi bi-box-seam me-2"></i>@(Model.Id == 0 ? CL["NewPackage"] : Model.Name)</h1>
+    <form asp-action="EditPackage" method="post">
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Name" class="form-label">@CL["Name"]</label>
+                        <input asp-for="Name" class="form-control" required />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Description" class="form-label">@CL["Description"]</label>
+                        <input asp-for="Description" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="StorageQuotaGb" class="form-label">@CL["Storage"]</label>
+                        <div class="input-group">
+                            <input asp-for="StorageQuotaGb" type="number" step="0.01" min="0" class="form-control" placeholder="@CL["Unlimited"]" />
+                            <span class="input-group-text">GB</span>
+                        </div>
+                        <span asp-validation-for="StorageQuotaGb" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="MaxMailAccounts" class="form-label">@CL["MaxMailAccounts"]</label>
+                        <input asp-for="MaxMailAccounts" type="number" min="0" class="form-control" placeholder="@CL["Unlimited"]" />
+                        <span asp-validation-for="MaxMailAccounts" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">@CL["WhenQuotaExceeded"]</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="BlockArchivingOverQuota" id="warn" value="false" checked="@(!Model.BlockArchivingOverQuota)" />
+                            <label class="form-check-label" for="warn">@CL["QuotaWarnOnly"]</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="BlockArchivingOverQuota" id="block" value="true" checked="@Model.BlockArchivingOverQuota" />
+                            <label class="form-check-label" for="block">@CL["QuotaBlock"]</label>
+                        </div>
+                        <div class="form-text">@CL["QuotaBlockHelp"]</div>
+                    </div>
+                    <div class="col-12 form-check ms-2">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label">@CL["PackageActiveHelp"]</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>@CL["Save"]</button>
+            <a asp-action="Packages" class="btn btn-outline-secondary">@CL["Cancel"]</a>
+        </div>
+    </form>
+</div>

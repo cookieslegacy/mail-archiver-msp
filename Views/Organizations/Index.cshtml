@@ -2,12 +2,27 @@
 @{
     ViewData["Title"] = CL["Organizations"];
     int? supportId = ViewBag.SupportOrganizationId;
-    string Size(long bytes) => bytes >= 1L << 30 ? $"{bytes / (double)(1L << 30):N1} GB" : $"{bytes / (double)(1L << 20):N1} MB";
+    int? managementId = ViewBag.ManagementOrganizationId;
+    var quotas = (Dictionary<int, MailArchiver.Services.Organizations.QuotaStatus>)ViewBag.Quotas;
 }
 <div class="container-fluid">
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
         <h1 class="h3 mb-0"><i class="bi bi-buildings me-2"></i>@CL["Organizations"]</h1>
-        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>@CL["NewOrganization"]</a>
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-action="Packages" class="btn btn-outline-secondary"><i class="bi bi-box-seam me-1"></i>@CL["Packages"]</a>
+            <div class="btn-group">
+                <a asp-action="UsageCsv" class="btn btn-outline-secondary" title="@CL["UsageExportHelp"]"><i class="bi bi-download me-1"></i>@CL["UsageExport"]</a>
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown"></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    @for (var i = 1; i <= 12; i++)
+                    {
+                        var m = DateTime.UtcNow.AddMonths(-i);
+                        <li><a class="dropdown-item" asp-action="UsageCsv" asp-route-year="@m.Year" asp-route-month="@m.Month">@m.ToString("yyyy-MM")</a></li>
+                    }
+                </ul>
+            </div>
+            <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>@CL["NewOrganization"]</a>
+        </div>
     </div>
     <p class="text-muted">@CL["OrganizationsIntro"]</p>
 
@@ -18,10 +33,11 @@
                     <tr>
                         <th>@CL["Name"]</th>
                         <th>@CL["Domains"]</th>
+                        <th>@CL["Package"]</th>
                         <th class="text-end">@CL["MailAccounts"]</th>
                         <th class="text-end">@CL["Users"]</th>
                         <th class="text-end">@CL["Emails"]</th>
-                        <th class="text-end">@CL["Storage"]</th>
+                        <th style="min-width: 180px">@CL["Storage"]</th>
                         <th>@CL["Retention"]</th>
                         <th>@CL["Status"]</th>
                         <th></th>
@@ -37,10 +53,14 @@
                                 <div class="small text-muted"><code>@o.Slug</code></div>
                             </td>
                             <td class="small">@o.EmailDomains</td>
-                            <td class="text-end">@row.MailAccounts.ToString("N0")</td>
+                            @{ var q = quotas.GetValueOrDefault(o.Id); }
+                            <td class="small">@(q?.PackageName ?? "–")</td>
+                            <td class="text-end @(q?.MailAccountLimitReached == true ? "text-danger fw-semibold" : "")">
+                                @row.MailAccounts.ToString("N0")@if (q?.MaxMailAccounts is int max) { <span class="text-muted"> / @max</span> }
+                            </td>
                             <td class="text-end">@row.Users.ToString("N0")</td>
                             <td class="text-end">@row.Emails.ToString("N0")</td>
-                            <td class="text-end">@Size(row.StorageBytes)</td>
+                            <td><partial name="_QuotaBar" model="q" /></td>
                             <td>
                                 @CL["YearsValue", o.RetentionYears]
                                 @if (o.LegalHold)
@@ -58,7 +78,21 @@
                                     <span class="badge bg-secondary">@CL["Inactive"]</span>
                                 }
                             </td>
-                            <td class="text-end">
+                            <td class="text-end text-nowrap">
+                                @if (managementId == o.Id)
+                                {
+                                    <form asp-action="LeaveManagement" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-info">@CL["LeaveManagement"]</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="EnterManagement" asp-route-id="@o.Id" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary" title="@CL["ManageMailAccountsHelp"]">
+                                            <i class="bi bi-inboxes me-1"></i>@CL["ManageMailAccounts"]
+                                        </button>
+                                    </form>
+                                }
                                 @if (supportId == o.Id)
                                 {
                                     <form asp-action="LeaveSupport" method="post" class="d-inline">

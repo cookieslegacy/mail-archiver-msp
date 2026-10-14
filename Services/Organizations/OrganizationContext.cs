@@ -30,6 +30,13 @@ namespace MailArchiver.Services.Organizations
 
         /// <summary>True while a provider admin works inside another organization for support.</summary>
         bool IsProviderSupportAccess { get; }
+
+        /// <summary>
+        /// True while a provider admin manages another organization's mail accounts. Unlike
+        /// support access this needs no approval, and it is confined to administration: the
+        /// <see cref="ProviderManagementFilter"/> keeps every page that shows email content closed.
+        /// </summary>
+        bool IsProviderManagementAccess { get; }
     }
 
     /// <summary>Claim and session keys shared by sign-in and the organization context.</summary>
@@ -41,6 +48,9 @@ namespace MailArchiver.Services.Organizations
 
         /// <summary>Session key holding the organization a provider admin switched into.</summary>
         public const string SupportOrganizationSessionKey = "SupportOrganizationId";
+
+        /// <summary>Session key holding the organization a provider admin manages (no content).</summary>
+        public const string ManagementOrganizationSessionKey = "ManagementOrganizationId";
 
         public static IEnumerable<Claim> For(User user)
         {
@@ -86,6 +96,8 @@ namespace MailArchiver.Services.Organizations
 
         public bool IsProviderSupportAccess => SupportOrganizationId.HasValue;
 
+        public bool IsProviderManagementAccess => !SupportOrganizationId.HasValue && ManagementOrganizationId.HasValue;
+
         public int? OrganizationId
         {
             get
@@ -94,7 +106,7 @@ namespace MailArchiver.Services.Organizations
                 if (user == null)
                     return null;
 
-                var support = SupportOrganizationId;
+                var support = SupportOrganizationId ?? ManagementOrganizationId;
                 if (support.HasValue)
                     return support;
 
@@ -103,24 +115,25 @@ namespace MailArchiver.Services.Organizations
             }
         }
 
-        private int? SupportOrganizationId
+        private int? SupportOrganizationId => SessionOrganization(OrganizationClaims.SupportOrganizationSessionKey);
+
+        private int? ManagementOrganizationId => SessionOrganization(OrganizationClaims.ManagementOrganizationSessionKey);
+
+        private int? SessionOrganization(string key)
         {
-            get
+            if (!IsProviderAdmin)
+                return null;
+            try
             {
-                if (!IsProviderAdmin)
+                // Session is only available for cookie requests; API requests have none.
+                var http = Http;
+                if (http?.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>() == null)
                     return null;
-                try
-                {
-                    // Session is only available for cookie requests; API requests have none.
-                    var http = Http;
-                    if (http?.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>() == null)
-                        return null;
-                    return http.Session.GetInt32(OrganizationClaims.SupportOrganizationSessionKey);
-                }
-                catch (InvalidOperationException)
-                {
-                    return null;
-                }
+                return http.Session.GetInt32(key);
+            }
+            catch (InvalidOperationException)
+            {
+                return null;
             }
         }
     }
@@ -135,6 +148,7 @@ namespace MailArchiver.Services.Organizations
         public bool IsProviderAdmin => false;
         public int? OrganizationId => null;
         public bool IsProviderSupportAccess => false;
+        public bool IsProviderManagementAccess => false;
     }
 
     /// <summary>A fixed organization, for tests and for jobs acting on behalf of one organization.</summary>
@@ -151,6 +165,7 @@ namespace MailArchiver.Services.Organizations
         public bool IsProviderAdmin { get; }
         public int? OrganizationId { get; }
         public bool IsProviderSupportAccess => false;
+        public bool IsProviderManagementAccess => false;
     }
 }
 

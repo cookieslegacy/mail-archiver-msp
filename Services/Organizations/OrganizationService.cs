@@ -14,6 +14,8 @@ namespace MailArchiver.Services.Organizations
         Task UpdateSettingsAsync(int organizationId, OrganizationSettings settings, string actingUser);
         Task<bool> EnterSupportAccessAsync(int organizationId, string reason, string actingUser);
         void LeaveSupportAccess(string actingUser);
+        Task<bool> EnterManagementAccessAsync(int organizationId, string actingUser);
+        void LeaveManagementAccess(string actingUser);
     }
 
     /// <summary>What a provider admin sees of an organization: names and counts, no content.</summary>
@@ -86,7 +88,7 @@ namespace MailArchiver.Services.Organizations
         {
             await using var system = CreateSystemContext(_services);
 
-            var organizations = await system.Organizations.OrderBy(o => o.Name).ToListAsync();
+            var organizations = await system.Organizations.Include(o => o.Package).OrderBy(o => o.Name).ToListAsync();
             var accounts = await system.MailAccounts
                 .GroupBy(a => a.OrganizationId)
                 .Select(g => new { g.Key, Count = g.Count() })
@@ -100,17 +102,14 @@ namespace MailArchiver.Services.Organizations
                 .GroupBy(e => e.OrganizationId)
                 .Select(g => new { g.Key, Count = g.LongCount() })
                 .ToDictionaryAsync(x => x.Key, x => x.Count);
-            var storage = await system.AccountStorageCaches
-                .GroupBy(c => c.MailAccount.OrganizationId)
-                .Select(g => new { g.Key, Bytes = g.Sum(c => c.TotalBytes) })
-                .ToDictionaryAsync(x => x.Key, x => x.Bytes);
+            var storage = await StorageUsage.ForOrganizationsAsync(system);
 
             return organizations.Select(o => new OrganizationOverview(
                 o,
                 accounts.GetValueOrDefault(o.Id),
                 users.GetValueOrDefault(o.Id),
                 emails.GetValueOrDefault(o.Id),
-                storage.GetValueOrDefault(o.Id))).ToList();
+                storage.GetValueOrDefault(o.Id).Total)).ToList();
         }
 
         public Task<Organization?> GetAsync(int id) =>
@@ -200,6 +199,7 @@ namespace MailArchiver.Services.Organizations
             });
             await _context.SaveChangesAsync();
 
+            LeaveManagementAccess(actingUser);
             http.Session.SetInt32(OrganizationClaims.SupportOrganizationSessionKey, organizationId);
             _logger.LogWarning("Provider admin {User} entered organization {OrganizationId} for support: {Reason}",
                 actingUser, organizationId, reason);
@@ -225,6 +225,61 @@ namespace MailArchiver.Services.Organizations
             _context.SaveChanges();
 
             http.Session.Remove(OrganizationClaims.SupportOrganizationSessionKey);
+        }
+
+        /// <summary>
+        /// Lets a provider admin administer an organization's mail accounts without the
+        /// organization's approval. Content stays closed (<see cref="ProviderManagementFilter"/>);
+        /// start, end and every change are written into the organization's audit log.
+        /// </summary>
+        public async Task<bool> EnterManagementAccessAsync(int organizationId, string actingUser)
+        {
+            var http = _httpContextAccessor.HttpContext
+                ?? throw new InvalidOperationException("Management access requires a request.");
+            if (http.Session.GetInt32(OrganizationClaims.SupportOrganizationSessionKey) != null)
+                LeaveSupportAccess(actingUser);
+            LeaveManagementAccess(actingUser);
+
+            await using var system = CreateSystemContext(_services);
+            if (!await system.Organizations.AnyAsync(o => o.Id == organizationId))
+                return false;
+
+            system.AccessLogs.Add(new AccessLog
+            {
+                Username = actingUser,
+                Type = AccessLogType.Organization,
+                Timestamp = DateTime.UtcNow,
+                OrganizationId = organizationId,
+                SearchParameters = "Provider management access started (mail accounts only, no email content)."
+            });
+            await system.SaveChangesAsync();
+
+            http.Session.SetInt32(OrganizationClaims.ManagementOrganizationSessionKey, organizationId);
+            _logger.LogInformation("Provider admin {User} manages organization {OrganizationId}", actingUser, organizationId);
+            return true;
+        }
+
+        public void LeaveManagementAccess(string actingUser)
+        {
+            var http = _httpContextAccessor.HttpContext;
+            var organizationId = http?.Session.GetInt32(OrganizationClaims.ManagementOrganizationSessionKey);
+            if (http == null || organizationId == null)
+                return;
+
+            using (var system = CreateSystemContext(_services))
+            {
+                system.AccessLogs.Add(new AccessLog
+                {
+                    Username = actingUser,
+                    Type = AccessLogType.Organization,
+                    Timestamp = DateTime.UtcNow,
+                    OrganizationId = organizationId,
+                    SearchParameters = "Provider management access ended."
+                });
+                system.SaveChanges();
+            }
+
+            http.Session.Remove(OrganizationClaims.ManagementOrganizationSessionKey);
         }
     }
 }

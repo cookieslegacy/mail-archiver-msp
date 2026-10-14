@@ -31,6 +31,16 @@
                         <input asp-for="RetentionYears" type="number" min="0" max="100" class="form-control" />
                         <div class="form-text">@CL["RetentionYearsShortHelp"]</div>
                     </div>
+                    <div class="col-md-6">
+                        <label asp-for="PackageId" class="form-label">@CL["Package"]</label>
+                        <select asp-for="PackageId" class="form-select">
+                            <option value="">@CL["NoPackage"]</option>
+                            @foreach (var p in (List<MailArchiver.Models.Package>)ViewBag.Packages)
+                            {
+                                <option value="@p.Id">@p.Name</option>
+                            }
+                        </select>
+                    </div>
                     <div class="col-12">
                         <label asp-for="Notes" class="form-label">@CL["Notes"]</label>
                         <textarea asp-for="Notes" class="form-control" rows="2"></textarea>

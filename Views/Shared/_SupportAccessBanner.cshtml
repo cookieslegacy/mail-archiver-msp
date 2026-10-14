@@ -1,17 +1,69 @@
 @using MailArchiver.Services.Organizations
+@using Microsoft.Extensions.Caching.Memory
 @inject IOrganizationContext BannerScope
-@if (BannerScope.IsProviderSupportAccess)
+@inject MailArchiver.Services.IAuthenticationService BannerAuth
+@if (BannerScope.IsProviderSupportAccess || BannerScope.IsProviderManagementAccess)
 {
     var organization = BannerScope.OrganizationId is int id
         ? await Context.RequestServices.GetRequiredService<IOrganizationService>().GetAsync(id)
         : null;
-    <div class="alert alert-warning d-flex flex-wrap align-items-center gap-2" role="alert">
-        <i class="bi bi-life-preserver"></i>
-        <span>@CL["SupportAccessActive", organization?.Name ?? "?"]</span>
-        <form asp-controller="Organizations" asp-action="LeaveSupport" method="post" class="ms-auto">
-            <button type="submit" class="btn btn-sm btn-dark">@CL["LeaveSupport"]</button>
-        </form>
-    </div>
+    if (BannerScope.IsProviderSupportAccess)
+    {
+        <div class="alert alert-warning d-flex flex-wrap align-items-center gap-2" role="alert">
+            <i class="bi bi-life-preserver"></i>
+            <span>@CL["SupportAccessActive", organization?.Name ?? "?"]</span>
+            <form asp-controller="Organizations" asp-action="LeaveSupport" method="post" class="ms-auto">
+                <button type="submit" class="btn btn-sm btn-dark">@CL["LeaveSupport"]</button>
+            </form>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info d-flex flex-wrap align-items-center gap-2" role="alert">
+            <i class="bi bi-inboxes"></i>
+            <span>@CL["ManagementAccessActive", organization?.Name ?? "?"]</span>
+            <form asp-controller="Organizations" asp-action="LeaveManagement" method="post" class="ms-auto">
+                <button type="submit" class="btn btn-sm btn-dark">@CL["LeaveManagement"]</button>
+            </form>
+        </div>
+    }
+}
+@if (BannerScope.OrganizationId is int quotaOrganization && BannerAuth.IsCurrentUserAdmin(Context))
+{
+    // Admins see their organization's package usage; other users only ever see their own mail accounts.
+    var cache = Context.RequestServices.GetRequiredService<IMemoryCache>();
+    var status = await cache.GetOrCreateAsync($"quota-banner-{quotaOrganization}", async entry =>
+    {
+        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30);
+        entry.Size = 1;
+        return await Context.RequestServices.GetRequiredService<IQuotaService>().GetStatusAsync(quotaOrganization);
+    });
+    if (status != null && (status.Level >= QuotaLevel.Warning || status.MailAccountLimitReached))
+    {
+        var css = status.Level >= QuotaLevel.Exceeded ? "alert-danger" : "alert-warning";
+        <div class="alert @css d-flex flex-wrap align-items-center gap-3" role="alert">
+            <i class="bi bi-hdd"></i>
+            <div class="flex-grow-1">
+                @if (status.Level == QuotaLevel.Blocked)
+                {
+                    <div class="fw-semibold">@CL["QuotaBannerBlocked"]</div>
+                }
+                else if (status.Level == QuotaLevel.Exceeded)
+                {
+                    <div class="fw-semibold">@CL["QuotaBannerExceeded"]</div>
+                }
+                else if (status.Level == QuotaLevel.Warning)
+                {
+                    <div class="fw-semibold">@CL["QuotaBannerWarning", (status.Percent ?? 0).ToString("N0")]</div>
+                }
+                @if (status.MailAccountLimitReached)
+                {
+                    <div>@CL["QuotaBannerMailAccounts", status.MaxMailAccounts ?? 0]</div>
+                }
+            </div>
+            <div style="min-width: 220px"><partial name="_QuotaBar" model="status" /></div>
+        </div>
+    }
 }
 @if (TempData["WarningMessage"] is string warning)
 {

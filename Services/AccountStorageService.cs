@@ -28,9 +28,9 @@ namespace MailArchiver.Services
             if (idList.Count == 0)
                 return new Dictionary<int, string>();
 
-            var cached = await _context.AccountStorageCaches
-                .Where(c => idList.Contains(c.MailAccountId))
-                .ToDictionaryAsync(c => c.MailAccountId, c => FormatFileSize(c.TotalBytes));
+            // Searchable copy and attachments plus the stored originals (fork: organizations).
+            var cached = (await MailArchiver.Services.Organizations.StorageUsage.ForAccountsAsync(_context, idList))
+                .ToDictionary(c => c.Key, c => FormatFileSize(c.Value));
 
             // Accounts ohne Cache-Eintrag -> "0 B"
             var result = new Dictionary<int, string>();

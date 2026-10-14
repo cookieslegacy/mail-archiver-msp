@@ -1819,7 +1819,8 @@ namespace MailArchiver.Services.Core
             // Inside an organization the size of the whole database would reveal how much the
             // other organizations store; the organization's own storage is shown instead.
             if (!_context.OrganizationScope.IsSystem)
-                return await _context.AccountStorageCaches.SumAsync(c => (long?)c.TotalBytes) ?? 0;
+                return (await MailArchiver.Services.Organizations.StorageUsage.ForOrganizationsAsync(_context))
+                    .Values.Sum(v => v.Total);
 
             try
             {

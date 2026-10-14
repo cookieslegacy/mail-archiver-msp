@@ -45,7 +45,7 @@ täglich / auf Anweisung von …] gelöscht, sofern kein Legal Hold besteht.
 | Admin | [ … ] | Verwaltung, Fristen, Legal Hold |
 | Prüfer | [Betriebsprüfung bei Bedarf] | Lesen und Export aller Postfächer |
 | Benutzer | [ … ] | Lesen zugewiesener Postfächer |
-| Dienstleister (Support) | [ … ] | nur nach Freigabe, protokolliert |
+| Dienstleister (Support) | [ … ] | Inhalte nur nach Freigabe, protokolliert; Postfach-Verwaltung ohne Inhalte, protokolliert |
 
 Anmeldung: [Passwort + 2FA / OIDC über …].
 
@@ -60,6 +60,8 @@ Anmeldung: [Passwort + 2FA / OIDC über …].
   Quellcode: [Repository-URL, Commit].
 * Betrieb: [Rechenzentrum/Standort], Container auf [Host], PostgreSQL [Version].
 * Speicher der Originale: [Datenbank / S3 Object Lock, Anbieter, Bucket, Modus COMPLIANCE].
+* Gebuchtes Paket / Speicherkontingent: [Paket, GB]; Verhalten bei Überschreitung: [nur warnen – empfohlen für
+  aufbewahrungspflichtige Postfächer / Archivierung anhalten].
 * Zeitstempeldienst: [Anbieter / keiner].
 * Mandantentrennung: siehe `doc/Organizations.md`; Datenbankrolle ohne Superuser: [ja/nein].
 

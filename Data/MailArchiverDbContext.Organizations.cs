@@ -21,6 +21,9 @@ namespace MailArchiver.Data
         public DbSet<ArchivedEmailOriginal> ArchivedEmailOriginals { get; set; }
         public DbSet<IntegrityCheckRun> IntegrityCheckRuns { get; set; }
         public DbSet<IntegrityAnchor> IntegrityAnchors { get; set; }
+        public DbSet<Package> Packages { get; set; }
+        public DbSet<MailAccountUsage> MailAccountUsages { get; set; }
+        public DbSet<OrganizationUsageSnapshot> OrganizationUsageSnapshots { get; set; }
 
         /// <summary>The organization scope this context instance works in.</summary>
         public IOrganizationContext OrganizationScope => _organizationContext;
@@ -53,6 +56,38 @@ namespace MailArchiver.Data
                 b.Property(o => o.Notes).HasColumnType("text");
                 b.Property(o => o.CreatedAt).HasColumnType("timestamp with time zone");
                 b.Ignore(o => o.EmailDomainList);
+                b.Ignore(o => o.EffectiveStorageQuotaBytes);
+                b.Ignore(o => o.EffectiveMaxMailAccounts);
+                b.Ignore(o => o.BlockArchivingOverQuota);
+                b.HasOne(o => o.Package).WithMany().HasForeignKey(o => o.PackageId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ---------------------------------------------------------------
+            // Packages and usage
+            // ---------------------------------------------------------------
+            modelBuilder.Entity<Package>(b =>
+            {
+                b.ToTable("Packages", "mail_archiver");
+                b.Property(p => p.Name).HasColumnType("text");
+                b.Property(p => p.Description).HasColumnType("text");
+                b.Property(p => p.CreatedAt).HasColumnType("timestamp with time zone");
+                b.HasIndex(p => p.Name).IsUnique();
+            });
+
+            // Maintained by database triggers on ArchivedEmailOriginals; read only for EF.
+            modelBuilder.Entity<MailAccountUsage>(b =>
+            {
+                b.ToTable("MailAccountUsage", "mail_archiver");
+                b.HasKey(u => u.MailAccountId);
+                b.Property(u => u.MailAccountId).ValueGeneratedNever();
+                b.Property(u => u.UpdatedAt).HasColumnType("timestamp with time zone");
+            });
+
+            modelBuilder.Entity<OrganizationUsageSnapshot>(b =>
+            {
+                b.ToTable("OrganizationUsageSnapshots", "mail_archiver");
+                b.HasKey(u => new { u.OrganizationId, u.Day });
+                b.Property(u => u.PackageName).HasColumnType("text");
             });
 
             modelBuilder.Entity<User>()
@@ -161,6 +196,10 @@ namespace MailArchiver.Data
                 OrganizationFilterBypass || a.OrganizationId == OrganizationFilterId);
             modelBuilder.Entity<AccessLog>().HasQueryFilter(l =>
                 OrganizationFilterBypass || l.OrganizationId == OrganizationFilterId);
+            modelBuilder.Entity<MailAccountUsage>().HasQueryFilter(u =>
+                OrganizationFilterBypass || u.OrganizationId == OrganizationFilterId);
+            modelBuilder.Entity<OrganizationUsageSnapshot>().HasQueryFilter(u =>
+                OrganizationFilterBypass || u.OrganizationId == OrganizationFilterId);
             modelBuilder.Entity<AuditExportJob>().HasQueryFilter(j =>
                 OrganizationFilterBypass || j.OrganizationId == OrganizationFilterId);
             modelBuilder.Entity<UserMailAccount>().HasQueryFilter(m =>

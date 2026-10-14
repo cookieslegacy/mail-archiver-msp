@@ -479,7 +479,7 @@ namespace MailArchiver.Controllers
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error creating email account: {Message}", ex.Message);
-                    ModelState.AddModelError("", $"{_localizer["ErrorOccurred"]}: {ex.Message}");
+                    ModelState.AddModelError("", MailArchiver.Services.Organizations.QuotaService.IsMailAccountLimitError(ex) ? MailArchiver.Services.Organizations.QuotaGuard.MailAccountLimitMessage(HttpContext) : $"{_localizer["ErrorOccurred"]}: {ex.Message}");
                     return View(model);
                 }
             }
@@ -615,7 +615,7 @@ namespace MailArchiver.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error importing M365 tenant accounts: {Message}", ex.Message);
-                ModelState.AddModelError("", _localizer["M365TenantAccountsCouldNotBeImported"].Value);
+                ModelState.AddModelError("", MailArchiver.Services.Organizations.QuotaService.IsMailAccountLimitError(ex) ? MailArchiver.Services.Organizations.QuotaGuard.MailAccountLimitMessage(HttpContext) : _localizer["M365TenantAccountsCouldNotBeImported"].Value);
                 return View("Create", model);
             }
         }
@@ -1317,6 +1317,13 @@ namespace MailArchiver.Controllers
                 return RedirectToAction(nameof(Edit), new { id });
             }
 
+            // Storage quota of the organization's package (fork: organizations).
+            if (await MailArchiver.Services.Organizations.QuotaGuard.ArchivingBlockedMessageAsync(HttpContext, id) is string quotaMessage)
+            {
+                TempData["ErrorMessage"] = quotaMessage;
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
             try
             {
                 // Use the sync job service to start a sync with validation. The acting
@@ -1792,6 +1799,13 @@ namespace MailArchiver.Controllers
                 return View(model);
             }
 
+            // Storage quota of the organization's package (fork: organizations).
+            if (await MailArchiver.Services.Organizations.QuotaGuard.ArchivingBlockedMessageAsync(HttpContext, model.TargetAccountId) is string quotaMessage)
+            {
+                ModelState.AddModelError(string.Empty, quotaMessage);
+                return View(model);
+            }
+
             // Validate file
             if (model.MBoxFile == null || model.MBoxFile.Length == 0)
             {
@@ -2086,6 +2100,13 @@ namespace MailArchiver.Controllers
 
             if (!ModelState.IsValid)
             {
+                return View(model);
+            }
+
+            // Storage quota of the organization's package (fork: organizations).
+            if (await MailArchiver.Services.Organizations.QuotaGuard.ArchivingBlockedMessageAsync(HttpContext, model.TargetAccountId) is string quotaMessage)
+            {
+                ModelState.AddModelError(string.Empty, quotaMessage);
                 return View(model);
             }
 
@@ -3213,7 +3234,7 @@ namespace MailArchiver.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error adding tenant mailboxes from source account {AccountId}", model.SourceAccountId);
-                ModelState.AddModelError("", _localizer["M365TenantAccountsCouldNotBeImported"].Value);
+                ModelState.AddModelError("", MailArchiver.Services.Organizations.QuotaService.IsMailAccountLimitError(ex) ? MailArchiver.Services.Organizations.QuotaGuard.MailAccountLimitMessage(HttpContext) : _localizer["M365TenantAccountsCouldNotBeImported"].Value);
                 await PopulateMailboxesForPostErrorAsync(model, sourceAccount);
                 return View("TenantManagement", model);
             }
@@ -3541,7 +3562,7 @@ namespace MailArchiver.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error processing CSV bulk import");
-                ModelState.AddModelError("", $"{_localizer["CsvImportCouldNotBeProcessed"]}: {ex.Message}");
+                ModelState.AddModelError("", MailArchiver.Services.Organizations.QuotaService.IsMailAccountLimitError(ex) ? MailArchiver.Services.Organizations.QuotaGuard.MailAccountLimitMessage(HttpContext) : $"{_localizer["CsvImportCouldNotBeProcessed"]}: {ex.Message}");
                 return View(model);
             }
         }

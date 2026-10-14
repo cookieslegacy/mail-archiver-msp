@@ -1,0 +1,59 @@
+@model List<MailArchiver.Models.Package>
+@{
+    ViewData["Title"] = CL["Packages"];
+    var bookings = (Dictionary<int, int>)ViewBag.Bookings;
+    string Size(long? bytes) => bytes is long b ? $"{b / (double)(1L << 30):N1} GB" : CL["Unlimited"].Value;
+}
+<div class="container" style="max-width: 960px">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+        <h1 class="h3 mb-0"><i class="bi bi-box-seam me-2"></i>@CL["Packages"]</h1>
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>@CL["Back"]</a>
+            <a asp-action="EditPackage" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>@CL["NewPackage"]</a>
+        </div>
+    </div>
+    <p class="text-muted">@CL["PackagesIntro"]</p>
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>@CL["Name"]</th>
+                        <th class="text-end">@CL["Storage"]</th>
+                        <th class="text-end">@CL["MailAccounts"]</th>
+                        <th>@CL["WhenQuotaExceeded"]</th>
+                        <th class="text-end">@CL["Organizations"]</th>
+                        <th>@CL["Status"]</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model)
+                    {
+                        var count = bookings.GetValueOrDefault(p.Id);
+                        <tr>
+                            <td><a asp-action="EditPackage" asp-route-id="@p.Id" class="fw-semibold">@p.Name</a><div class="small text-muted">@p.Description</div></td>
+                            <td class="text-end">@Size(p.StorageQuotaBytes)</td>
+                            <td class="text-end">@(p.MaxMailAccounts?.ToString() ?? CL["Unlimited"].Value)</td>
+                            <td class="small">@(p.BlockArchivingOverQuota ? CL["QuotaBlock"] : CL["QuotaWarnOnly"])</td>
+                            <td class="text-end">@count</td>
+                            <td>@if (p.IsActive) { <span class="badge bg-success">@CL["Active"]</span> } else { <span class="badge bg-secondary">@CL["Inactive"]</span> }</td>
+                            <td class="text-end">
+                                @if (count == 0)
+                                {
+                                    <form asp-action="DeletePackage" asp-route-id="@p.Id" method="post" onsubmit="return confirm('@CL["ConfirmDeletePackage"]');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="7" class="text-muted">@CL["NoPackages"]</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

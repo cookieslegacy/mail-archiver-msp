@@ -58,9 +58,23 @@ namespace MailArchiver.Models
         /// </summary>
         public bool AllowProviderAccess { get; set; }
 
+        /// <summary>The booked package (storage, number of mail accounts); null = no limits.</summary>
+        public int? PackageId { get; set; }
+        public virtual Package? Package { get; set; }
+
+        /// <summary>Individual storage quota in bytes; overrides the package when set.</summary>
+        public long? StorageQuotaBytes { get; set; }
+
+        /// <summary>Individual limit of mail accounts; overrides the package when set.</summary>
+        public int? MaxMailAccounts { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public string? Notes { get; set; }
+
+        public long? EffectiveStorageQuotaBytes => StorageQuotaBytes ?? Package?.StorageQuotaBytes;
+        public int? EffectiveMaxMailAccounts => MaxMailAccounts ?? Package?.MaxMailAccounts;
+        public bool BlockArchivingOverQuota => Package?.BlockArchivingOverQuota == true;
 
         public IEnumerable<string> EmailDomainList => EmailDomains
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
